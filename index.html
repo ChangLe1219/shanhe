@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#202a27">
+  <meta name="description" content="在朝堂、商路与江湖之间，写下属于自己的命运。">
+  <title>《山河局》· 一城风云</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="brand-mark">山</span><span>山河局<small>一城风云 · 人生模拟</small></span></a>
+      <div class="top-stats">
+        <span>🪙 <b id="silver">0</b></span><span>🎖️ <b id="fame">0</b></span>
+        <span>📜 <b id="day-label">未开局</b></span>
+      </div>
+      <button class="quiet-button" id="reset-button" title="重新开始">重开</button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-shade"></div>
+      <div class="hero-copy">
+        <p class="eyebrow">架空庆国 · 景和十七年</p>
+        <h1>一纸旧账，牵动<br>朝野风云。</h1>
+        <p>你来到澜州。是做个富商、清官、江湖客，还是让所有人都欠你一个人情？</p>
+      </div>
+      <div class="hero-stamp">澜州<br><small>LAN ZHOU</small></div>
+      <div class="hero-landscape" aria-hidden="true"><span class="sun"></span><i class="mountain m1"></i><i class="mountain m2"></i><i class="mountain m3"></i><span class="river"></span></div>
+    </section>
+
+    <section id="creation" class="panel creation-panel">
+      <div class="section-heading"><div><p class="eyebrow">命由天定，也由你改</p><h2>生成你的角色</h2></div><span class="round-seal">初入<br>澜州</span></div>
+      <p class="muted">每次生成都会随机你的出身、性别、天赋与初始属性。出身提供起步优势，也会带来各自的牵绊。</p>
+      <div id="origin-card" class="origin-card"></div>
+      <div id="attribute-roll" class="attribute-roll"></div>
+      <div class="creation-actions"><button class="secondary-button" id="reroll-button">🎲 重新抽取</button><button class="primary-button" id="begin-button">就此入局 <span>→</span></button></div>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="identity-strip">
+        <div class="identity-main"><div id="portrait" class="portrait">客</div><div><p class="eyebrow" id="identity-kicker">澜州新客</p><h2 id="character-name">—</h2><p id="identity-desc" class="muted"></p></div></div>
+        <div class="energy-box"><span>今日行程</span><strong><b id="energy">3</b> / 3</strong><div class="energy-track"><i id="energy-fill"></i></div></div>
+      </div>
+
+      <div class="game-grid">
+        <section class="main-column">
+          <section class="panel story-panel">
+            <div class="section-heading"><div><p class="eyebrow" id="date-kicker">景和十七年 · 春</p><h2 id="scene-title">澜州城里，风声渐紧</h2></div><span class="scene-icon">卷</span></div>
+            <p id="scene-copy" class="story-copy"></p>
+            <div id="event-box" class="event-box hidden"></div>
+            <div id="resolution-box" class="resolution-box hidden"></div>
+          </section>
+
+          <section class="panel action-panel">
+            <div class="section-heading"><div><p class="eyebrow">选择今日去处</p><h2>你准备做什么？</h2></div><span class="muted small">行动会推进局势</span></div>
+            <div class="action-grid" id="action-grid"></div>
+            <button class="end-day-button" id="end-day">结束今日，看看城中风向 <span>→</span></button>
+          </section>
+
+          <section class="panel chronicle-panel">
+            <div class="section-heading"><div><p class="eyebrow">来往皆有回响</p><h2>近来发生</h2></div><span class="scene-icon">记</span></div>
+            <div id="chronicle" class="chronicle"></div>
+          </section>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel quest-panel">
+            <div class="panel-heading"><div><p class="eyebrow">贯穿主线</p><h2>河仓旧账</h2></div><span class="quest-mark">案</span></div>
+            <p id="quest-copy" class="muted"></p>
+            <div class="quest-progress"><div class="progress-label"><span>关键线索</span><b id="clue-count">0 / 3</b></div><div class="progress-track"><i id="clue-fill"></i></div></div>
+            <div id="clue-list" class="clue-list"></div>
+          </section>
+
+          <section class="panel profile-panel">
+            <div class="panel-heading"><div><p class="eyebrow">随身档案</p><h2>人物与家业</h2></div><span class="scene-icon">册</span></div>
+            <div class="profile-tabs" role="tablist" aria-label="个人信息">
+              <button class="profile-tab active" data-tab="person">人物</button><button class="profile-tab" data-tab="assets">资产</button><button class="profile-tab" data-tab="martial">武学</button><button class="profile-tab" data-tab="bag">背包</button>
+            </div>
+            <div class="profile-view" id="tab-person">
+              <div class="panel-heading subheading"><span id="rank-label" class="rank-label">布衣</span><span class="muted">人情 <b id="favor">0</b> · 官声 <b id="official">0</b> · 心力 <b id="stress">0</b></span></div>
+              <div id="stats-list" class="stats-list"></div>
+            </div>
+            <div class="profile-view hidden" id="tab-assets">
+              <div id="asset-content" class="asset-content"></div>
+              <button class="secondary-button full-button" id="expand-shop">扩建铺面</button>
+            </div>
+            <div class="profile-view hidden" id="tab-martial">
+              <p class="muted">练功消耗一次今日行程。属性影响武学上限，招式熟练后会提升实战能力。</p>
+              <div id="martial-summary" class="martial-summary"></div>
+              <div id="martial-skills" class="martial-skills"></div>
+              <label class="practice-label">今日修习<select id="practice-style"><option value="sword">剑术</option><option value="internal">内功</option><option value="footwork">轻身功</option></select></label>
+            </div>
+            <div class="profile-view hidden" id="tab-bag">
+              <p class="muted">随身物品可能来自出身、调查、交易与事件。部分物品会在后续行动中派上用场。</p>
+              <div id="inventory-list" class="inventory-list"></div>
+            </div>
+          </section>
+
+          <section class="panel faction-panel">
+            <div class="panel-heading"><div><p class="eyebrow">澜州势力</p><h2>各方态度</h2></div><span class="scene-icon">势</span></div>
+            <div id="faction-list" class="faction-list"></div>
+          </section>
+
+          <section class="panel people-panel">
+            <div class="panel-heading"><div><p class="eyebrow">人脉与姻缘</p><h2>熟识之人</h2></div><span class="scene-icon">缘</span></div>
+            <div id="people-list" class="people-list"></div>
+            <div id="family-card" class="family-card"></div>
+          </section>
+        </aside>
+      </div>
+      <footer><span>你的选择会改变澜州的局势。</span><span>进度自动保存在此浏览器</span></footer>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="game.js"></script>
+</body>
+</html>
