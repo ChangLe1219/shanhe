@@ -1,0 +1,39 @@
+{
+  "formatVersion": 1,
+  "name": "渡口果园 · 扩写示例",
+  "events": [
+    {
+      "id": "example-orchard",
+      "kind": "random",
+      "routes": ["trade", "medicine"],
+      "once": true,
+      "title": "渡口果园",
+      "text": "老果农想将落果送进医馆做果饮，但商贩愿意出钱收走酿酒。他请你替自己选一条能持续的销路。",
+      "choices": [
+        {
+          "label": "分出一半给医馆，其余按契出售",
+          "text": "果农拿到下一季的订金，也为医馆留了便宜果饮。三天后会有一封回信。",
+          "effects": {"routes.trade": 3, "factions.healers": 3, "flags.example_orchard_helped": true},
+          "delay": {"id": "example-orchard-letter", "days": 3}
+        },
+        {
+          "label": "整理报价与成本，由果农自行决定",
+          "text": "他知道了自己最少要收多少钱，才足以让果园继续活下去。",
+          "effects": {"stats.business": 1, "routes.trade": 2}
+        }
+      ]
+    },
+    {
+      "id": "example-orchard-letter",
+      "kind": "followup",
+      "routes": ["trade", "medicine"],
+      "once": true,
+      "title": "果园的回信",
+      "text": "果农寄来一包晒干的果片，说约定开始兑现。医馆也想请你来商量长期供货。",
+      "choices": [
+        {"label": "回信，约定按季核算成本", "text": "两家有了清楚的合作办法。", "effects": {"silver": 12, "routes.trade": 2}},
+        {"label": "把果片分给同路人", "text": "小小一包果干，让行路多了一点甜。", "effects": {"health": 8, "morality": 2}}
+      ]
+    }
+  ]
+}

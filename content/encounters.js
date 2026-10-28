@@ -1,0 +1,311 @@
+(function(root){
+const C=(label,text,effects={},extra={})=>({label,text,effects,...extra});
+const E=(id,routes,title,text,choices,when)=>({id,kind:'random',routes:routes.split(','),title,text,choices,when,cooldown:8});
+const events=[
+E('wu-broken-banner','martial,trade','断旗还镖','长风镖局的镖旗断在渡口，货主坚持按失镖赔偿。货物其实还在，只是押镖人先去救了一船落水者。总镖头没有辩解，等着货主开价。',[
+ C('替镖局作证','你将落水者的姓名逐一记下。货主不情愿地收了货，镖局记住了这次解围。',{'routes.martial':3,'factions.escort':7,renown:2}),
+ C('垫付延误的赔款','银子解了眼前的结，今后你的货也多了一面镖旗保护。',{'routes.trade':3,'relations.xu':10},{cost:{silver:25}}),
+ C('趁机压低运价','你谈成一笔便宜运输，镖师的眼神却冷了下去。',{'routes.trade':2,silver:18,'factions.escort':-5,morality:-2})]),
+E('wu-night-duel','martial','夜雨试剑','桥下避雨的陌生剑客说，你走路时总先把左肩让给路人，出手一定习惯护人。他邀你过三招，赌注只是酒葫芦里最后一口酒。',[
+ C('以守代攻，接下三招','',{'routes.martial':3},{check:{stat:'martial',difficulty:43},success:{text:'最后一剑点在桥栏上。陌生人笑着报了姓名：燕停云。',effects:{'stats.martial':2,'relations.yan':8,renown:3}},failure:{text:'你脚下一滑，狼狈避开剑锋。他伸手拉你起来，指出了步法里的破绽。',effects:{health:-7,'stats.martial':1,'relations.yan':3}}}),
+ C('请他讲讲守人的剑','你们听了一夜雨。剑客说，最难练的不是挡住一剑，而是知道何时不该躲。',{'routes.martial':2,'stats.insight':1}),
+ C('只添一壶热酒','你没有试剑，他也没有再劝。一夜交谈，倒比输赢更像朋友。',{'relations.yan':6,'stats.charm':1},{cost:{silver:8}})]),
+E('wu-school-fee','martial,official','山门的束脩','拳馆在门外挂出告示：交不起束脩的孩子，可替馆里做杂活。你却看见孩子们一直在扫院，没人教他们站桩。馆主说这也是磨性子。',[
+ C('当场教孩子们一套基础拳','你教得不漂亮，孩子却第一次知道，握紧拳头不是为了挨打。',{'routes.martial':3,morality:3,'factions.sword':-2,renown:2}),
+ C('替他们缴清束脩并立字据','馆主收钱时不大高兴，但你留下了按月检查授课的约定。',{'routes.official':2,'stats.strategy':1},{cost:{silver:20}}),
+ C('劝孩子另寻师父','你带他们离开院门，承诺不再轻信挂得漂亮的招牌。',{'routes.scholar':2,'stats.insight':1})]),
+E('wu-forbidden-book','martial,scholar','禁谱残页','旧书摊上压着一页据说出自邪派的剑谱。上面没有杀招，只有为伤残者修改的持剑姿势。摊主怕惹麻烦，正要把纸扔进火盆。',[
+ C('买下残页，仔细推演','你依图练习，明白了所谓邪谱也有其救人的来处。',{'routes.martial':3,'inventory.swordbook':1,'stats.martial':1},{cost:{silver:12}}),
+ C('抄下姿势送往医馆','医者看过后说，这对手筋受伤的人或许有用。一本禁书从此多了别的名字。',{'routes.medicine':3,'factions.healers':5,'stats.insight':1}),
+ C('劝摊主藏好原页','你没有带走它，只告诉摊主：书页不该替写它的人认罪。',{'routes.scholar':2,morality:2})]),
+E('wu-escort-guest','martial,trade','不在货单上的人','一趟普通镖货里，多出一个不肯露脸的客人。雇主只说照旧走山路。客人夜里来找你，称自己是要到巡按台作证的矿工。',[
+ C('改变路线，护他去官道','',{'routes.martial':3},{check:{stat:'strategy',difficulty:48},success:{text:'你在两队商旅之间换了车，追踪者扑了个空。矿工留下了一块带记号的铁样。',effects:{'inventory.evidence':1,'factions.censor':7,renown:4}},failure:{text:'追踪者仍赶了上来。你护着矿工撤进驿站，肩头受了伤。',effects:{health:-12,'factions.censor':4,'factions.shadow':-4}}}),
+ C('要雇主把护人写进契约','白纸黑字加上赔款，雇主终于承认这不是一趟普通的镖。',{'routes.trade':3,silver:22,'factions.escort':3}),
+ C('让他在下个驿站自行离开','你没有交出他，却也没答应冒险。车轮碾过泥路，那顶斗笠很快消失在后面。',{'stats.insight':1,'routes.martial':1})]),
+E('wu-sword-tax','martial,official','佩剑税','巡检在城门外对佩兵刃者加收盘查钱。告示上有印，却没有税名。一位少年握紧剑柄，已经快要与差役动手。',[
+ C('按住少年，要求核验文书','',{'routes.official':3},{check:{stat:'learning',difficulty:42},success:{text:'你指出告示引用的是军械禁令。巡检不得不退回多收的钱。',effects:{renown:4,'factions.court':2}},failure:{text:'巡检以妨碍公务相逼。你先保少年脱身，自己多挨了半个时辰的训斥。',effects:{'factions.court':-3,heat:3}}}),
+ C('以剑敲落钱匣，震慑众人','',{'routes.martial':3},{check:{stat:'martial',difficulty:50},success:{text:'差役退开了，围观者却不敢替你鼓掌。事情会如何记进公文，尚未可知。',effects:{renown:4,heat:8,'factions.court':-5}},failure:{text:'你没能拿准分寸，被数人围住，负伤离去。',effects:{health:-15,heat:10}}}),
+ C('先替少年缴钱，再向里正询问','你收好票据，至少没有让冲突变成一份血淋淋的罪状。',{'stats.strategy':1,'routes.martial':1},{cost:{silver:10}})]),
+E('wu-old-master','martial','老拳师的最后一课','老拳师要把拳馆传给徒弟，却发现徒弟们只争牌匾，不愿接下馆里赊欠的医药费。他请你作见证，问这块匾究竟值多少。',[
+ C('劝以债务与授课共同承继','你把门人的责任写成约书。有人不肯签，也终于有人留下。',{'routes.martial':3,'stats.strategy':1,renown:3}),
+ C('帮拳馆还一部分药债','老拳师将一套呼吸法讲给你听，说礼可以还，情慢慢记。',{'routes.martial':3,'stats.constitution':2},{cost:{silver:30}}),
+ C('劝他暂时卸匾，先把身体养好','牌匾收进了屋，院里反而第一次安静得能听见拳声。',{'routes.medicine':2,health:5,morality:2})]),
+E('wu-blood-letter','martial,outlaw','染血的拜帖','山门收到一封血书，写信人自称十年前遭逐的弟子，约在废庙对质。师兄要你送回拒帖，并称此人已经投了山寨。',[
+ C('先去废庙听完另一方的话','你听见了另一份门内往事，足以让拒帖上的漂亮话变得刺耳。',{'routes.martial':3,'factions.blackflag':3,'stats.insight':2}),
+ C('请双方到有见证的地方对质','你没能化解旧怨，但把一次私斗变成了不能轻易遮掩的公议。',{'routes.official':2,'factions.sword':3,renown:2}),
+ C('只替他们把信往返送到','你把信一封封送完，拒绝替任何人添一句定罪的话。',{'routes.trade':1,silver:12,'stats.charm':1})]),
+E('shang-wet-silk','trade','雨夜湿绸','一批绸缎受潮，供货商坚持说装船时完好。船工说是仓顶漏雨，仓主说是你没买足遮雨油布。三份契约，各有一处空白。',[
+ C('逐份核对交接时辰','',{'routes.trade':3},{check:{stat:'business',difficulty:44},success:{text:'你找到重复登记的半个时辰，责任终于有了归处。货物折损获得赔偿。',effects:{silver:40,'stats.business':1}},failure:{text:'证据仍不足。你止损卖出可用的部分，交了一笔学费。',effects:{silver:-15,'stats.business':1}}}),
+ C('把绸缎改作低价内衬卖给裁坊','你换了用途，也换了买家。这笔生意没有预期好，却没有全赔。',{'routes.trade':3,silver:12,'factions.guild':2}),
+ C('送给收容流民的善堂做冬衣','残布不值原价，穿到身上却仍能保暖。',{'routes.medicine':2,morality:4,renown:2,'factions.healers':3})]),
+E('shang-salt-seal','trade,official','盐引上的空格','盐商请你代填一张盐引，数量一栏故意空着。只要落笔，三十两酬劳便归你。他说满城都如此做，认真倒显得不合群。',[
+ C('按实际货数填写','盐商把酬劳减了一半。你的字据却没有留下一处能被别人添改的空隙。',{'routes.trade':3,silver:15,'factions.guild':-2,morality:2}),
+ C('照他的意思留白','空白换来了现银，也让你成为这笔不知有多大的买卖的经手人。',{'routes.outlaw':3,silver:35,heat:5,morality:-4,'flags.salt_debt':true}),
+ C('拒绝，并记下引票编号','你没有当场揭发。编号被抄进袖中，或许有用，或许会带来麻烦。',{'routes.official':3,'factions.censor':3,'stats.insight':1})]),
+E('shang-caravan-partner','trade','半车合伙','一个陌生商人只差半车粮就能凑齐交货数。他愿意出高价收购，却只能先付一半。对方的名帖是真的，钱庄存根却有些模糊。',[
+ C('要求以货栈货权担保','',{'routes.trade':3},{check:{stat:'business',difficulty:47},success:{text:'担保办妥，对方顺利回款。你赚到了货款外的一份人情。',effects:{silver:38,'factions.guild':4}},failure:{text:'货权另有抵押。你及时停下交易，白跑半日。',effects:{'stats.insight':1}}}),
+ C('信他一次，先垫一笔','他在入夜前带回尾款。你的冒险成了他能继续跑商的本钱。',{'routes.trade':3,silver:55,'stats.charm':1},{cost:{silver:35}}),
+ C('只介绍一个愿作担保的熟人','你没赚价差，倒让两笔各有难处的生意接到了一起。',{'routes.trade':2,'stats.charm':2,'factions.guild':2})]),
+E('shang-grain-price','trade,medicine','粮价涨在开仓前','官仓明日放粮的消息还未公示。你的同行已经租好空仓，准备今夜抬价出货。街边有人正在把家传木梳换成一碗粥。',[
+ C('按平价卖给街坊','你放弃了最容易赚的一笔钱，却让自己的铺号第一次被人主动念起。',{'routes.trade':3,renown:5,morality:4,'factions.guild':-2}),
+ C('跟着抬价','银子比平时来得快。有人在铺门上写下一个很难擦去的字。',{'routes.trade':3,silver:48,renown:-4,morality:-5,heat:2}),
+ C('将开仓消息送到义诊棚','医者提前备好粥药，至少不会让虚弱的人饿着肚子排一整夜队。',{'routes.medicine':3,'factions.healers':6,morality:3})]),
+E('shang-counterfeit','trade,scholar','另一枚商号印','市面出现与你经手铺号同名的劣货。印章只差一道刀痕，掌柜断定是同行设局，要雇人砸掉对方摊子。',[
+ C('找刻章师辨认刀痕','',{'routes.trade':3},{check:{stat:'insight',difficulty:45},success:{text:'刀痕指向作坊里的旧伙计。你先追到货源，再谈赔付，没有砸错一家摊。',effects:{silver:28,renown:3}},failure:{text:'刻章师不肯指认。你只得先公示验货办法，花时间挽回口碑。',effects:{silver:-10,renown:1}}}),
+ C('重做验货凭签，逐一退换','你承担了眼前损失，也给铺号加上一道别人难以伪造的信用。',{'routes.trade':3,'factions.guild':4,renown:4},{cost:{silver:20}}),
+ C('私下买回劣货，避免闹大','风波暂时平息，仿货的人却学会了如何让你付钱。',{'routes.outlaw':2,heat:2,'flags.counterfeit_paid':true},{cost:{silver:12}})]),
+E('shang-night-wharf','trade,outlaw','夜码头的空船','漕帮愿借你一条不用过明关的水路，运价只有白天的一半。船上装的都是普通日用货，可送来的货单偏偏少了一页。',[
+ C('补齐货单，照明路走','杜魁没有生气，只叫人把白日的船次留给你。',{'routes.trade':3,'factions.canal':3,'relations.du':3}),
+ C('接受夜航，亲自押船','',{'routes.outlaw':3},{check:{stat:'strategy',difficulty:46},success:{text:'货顺利过了暗汊。你记住一条新路，也被夜渡的船认了脸。',effects:{silver:32,'factions.shadow':5,heat:4}},failure:{text:'巡船突然拦了河口。你弃去一部分货才得脱身。',effects:{silver:-20,heat:8}}}),
+ C('只问失去的那页是谁拿走的','船工没有回答，天亮后却在你的门缝里塞进了一角船契。',{'routes.official':2,'inventory.evidence':1,'factions.censor':2})]),
+E('shang-apprentice','trade,scholar','会算账的伙计','新来的小伙计算得快，却把工钱寄回家后就再不肯吃午饭。他请求预支下月工钱，掌柜说开了这次头，人人都会来借。',[
+ C('订出公开的预支与分期规则','规矩没有让所有人满意，却让一次求情不再取决于掌柜当天的心情。',{'routes.trade':3,'stats.business':1,renown:2}),
+ C('替他补齐急用的钱','你没有问他何时还，只让他先坐下来吃饭。',{'routes.trade':2,morality:3,'stats.charm':1},{cost:{silver:15}}),
+ C('教他给乡里写一封求助信','他发现家里不是只剩自己一个人可以想办法。',{'routes.scholar':3,'factions.academy':2})]),
+E('shang-foreign-measure','trade','两种尺码','外地商人按自己的尺卖绸，你按本地尺收货，双方都觉得少了。围观者催着报官，一位老裁缝说两地尺制本来就不同。',[
+ C('按重量与幅宽重议价格','',{'routes.trade':3},{check:{stat:'business',difficulty:40},success:{text:'两人终于算出都能接受的数。这笔小争执替你带来一位稳定供货人。',effects:{silver:25,'stats.business':1}},failure:{text:'你算漏了幅宽，只好承担多出的差价。',effects:{silver:-9,'stats.business':1}}}),
+ C('请裁缝作中人，各让一步','你们在货单上画下两把尺，约定下次不再靠记性。',{'routes.trade':2,'stats.charm':1}),
+ C('将两地尺制记成对照小册','小册在码头传开，少了许多大声争吵。',{'routes.scholar':3,renown:2,'inventory.manuscript':1})]),
+E('guan-missing-page','official,scholar','缺页的户籍','户籍册少了一页，恰好是受灾最重的一村。书吏说重新补造要等秋审，那些人眼下只能以流民身份领一半口粮。',[
+ C('向里正与邻村交叉核验','',{'routes.official':3},{check:{stat:'learning',difficulty:44},success:{text:'三份名册合在一起，补回了被撕去的一村人。',effects:{renown:4,'factions.court':4,'relations.ahe':5}},failure:{text:'名册有重名，核验拖延。你先争取到一份临时领粮凭据。',effects:{'factions.court':1,'stats.learning':1}}}),
+ C('先垫付缺少的口粮','官手续仍慢，粥却总得先下锅。',{'routes.medicine':3,morality:4,'relations.ahe':6},{cost:{silver:18}}),
+ C('依旧册办理，免担责任','你没有写错一个字，册上没有的人却依旧没有饭。',{'routes.official':2,'factions.court':3,morality:-3})]),
+E('guan-private-gift','official,trade','节礼不写姓名','上官的管家送来一匣笔墨，匣底压着二十两银子。明日正好要审核其亲眷的河堤承包文书。你退回去，可能连笔墨也被视作不给面子。',[
+ C('退银留笔，并登记礼单','管家带着银子离开。你的礼单成了日后能说清来往的一份证据。',{'routes.official':3,morality:3,'factions.censor':3,'factions.court':-2}),
+ C('照收礼物，许诺关照','银子很轻，文书却从此像压在你手上。',{'routes.official':3,silver:25,morality:-5,heat:3,'flags.gift_taken':true}),
+ C('请同僚一同验礼，再按公价买下笔墨','你为笔墨付了钱，也把难堪化成一场有见证的买卖。',{'routes.trade':2,'stats.strategy':1,'factions.court':1},{cost:{silver:8}})]),
+E('guan-prisoner','official,outlaw','牢里多出的人','巡检送来一个衣衫褴褛的人，罪名是通匪。卷宗只有口供，没有失物和被害人。被押者说自己只是给山里的妹妹送过一袋粮。',[
+ C('要求补齐证据再定罪','你没有当场放人，却阻止一份空白证据栏变成最终判决。',{'routes.official':3,'factions.censor':4,morality:3,'factions.court':-2}),
+ C('暗中替他送信给妹妹','信上没有匪号，只有问娘的咳嗽好没有。你也被山路上的人记住了。',{'routes.outlaw':3,'factions.blackflag':5,heat:2}),
+ C('替他请来懂律例的代书','代书坐到牢门前，把口供里的每个日子重新问了一遍。',{'routes.scholar':3,'factions.academy':3},{cost:{silver:12}})]),
+E('guan-flood-budget','official,trade','堤银与花灯','州府打算把一半修堤银改作迎接巡抚的花灯。上官说巡抚欢喜，来年拨款自然更多。河边的老人却指着一处新裂缝，要你趁水还浅去看。',[
+ C('实勘裂缝，附图上报','',{'routes.official':3},{check:{stat:'insight',difficulty:46},success:{text:'图上的渗水线让上官无法再装作无事。修堤银被保了下来。',effects:{renown:5,'factions.court':3,'factions.smith':3}},failure:{text:'上报被压了一日。你先组织人用砂袋顶住最薄的一段。',effects:{silver:-12,renown:2}}}),
+ C('请商盟先借工料垫修','商盟答应了，也把未来一年的过桥税谈成了条件。',{'routes.trade':3,'factions.guild':5,'factions.court':2,'flags.bridge_concession':true}),
+ C('赞同花灯方案，换取上官信任','你获了一句识大体。灯架搭起时，河水已经高过了旧石痕。',{'routes.official':3,'factions.court':6,morality:-4})]),
+E('guan-exam-topic','official,scholar','先到的考题','同乡神秘地递来一张纸，说是今年策试的题目。是真是假不重要，只需付钱买个心安。题目写的正是澜州漕粮与边军转饷。',[
+ C('不买，按真实情况准备策论','你把手里的见闻写进文章。它未必合阅卷人的意，至少有自己的来处。',{'routes.official':3,'stats.learning':2,morality:2}),
+ C('套问考题从何处传来','',{'routes.scholar':3},{check:{stat:'charm',difficulty:46},success:{text:'消息经过的三个人都与一个刻坊有关。你摸到了题目之外的线。',effects:{'factions.censor':5,'inventory.manuscript':1}},failure:{text:'对方起了疑心，把纸收走了。你只记住题上的几个词。',effects:{'stats.insight':1}}}),
+ C('买下来私做准备','你付的钱买不到一个保证，却买下了一份不敢示人的侥幸。',{'routes.official':3,'stats.learning':2,morality:-3,heat:3},{cost:{silver:20}})]),
+E('guan-seal-night','official','夜里的印','一封急递需要用印，上官却已赴宴。守印书吏问你，是按规矩等到明日，还是冒险替他把救灾公文送出去。迟一天，可能就少到一船米。',[
+ C('追回上官，请他当场核签','你跑得气喘吁吁，终究让公文在夜禁前出了门。',{'routes.official':3,'stats.constitution':1,renown:2}),
+ C('留下具结，自担急用印责','公文及时出城。书吏把你的具结叠好，说这张纸将来或许比印更重。',{'routes.official':4,'factions.court':-2,'factions.censor':3,morality:3}),
+ C('先通知船户备粮，等明日补印','你让消息先走一步，用人情替手续争出半夜时间。',{'routes.trade':2,'factions.canal':4,'stats.strategy':1})]),
+E('guan-informer','official,outlaw','告密者的赏银','有人报称邻居通匪，却说不出山寨在哪。告示写着检举有赏，邻居家的田恰好压着一笔到期的债。差役问你，要不要先把赏银发下去。',[
+ C('先查债契，再查指控','你发现报案者正是债主的伙计。案卷多了一项诬告线索。',{'routes.official':3,'stats.insight':1,renown:3}),
+ C('当面调解，约定不得私刑催债','两家暂且签字。你知道纸压不住所有恶意，但能留下追究的依据。',{'routes.official':2,'stats.charm':1,morality:2}),
+ C('将这场盘查的风声送进山路','山寨没有来救人，只回话说：你看到的，比告示上写的多。',{'routes.outlaw':3,'factions.blackflag':4,'factions.court':-3,heat:3})]),
+E('guan-promotion','official','补缺的荐名','一位书吏愿把自己的补缺机会让给你，条件是你上任后保留他的私账。他说自己也要养家，哪有全不沾灰的官位。',[
+ C('拒绝私账，另请公开考校','机会慢了下来，你却不必在第一天就替别人守秘密。',{'routes.official':3,'stats.learning':1,morality:3}),
+ C('答应，但先查清账上都记着谁','',{'routes.official':3},{check:{stat:'strategy',difficulty:51},success:{text:'账上并非贪款，而是补贴差役家属的私筹。你劝他将钱另立公账。',effects:{'factions.court':5,'stats.strategy':1}},failure:{text:'你没看清一处转借，已经替他背了一段亏空。',effects:{silver:-20,heat:4}}}),
+ C('把机会荐给更合适的同窗','同窗记下了这份人情。一个空缺，也未必只有你争我夺的走法。',{'routes.scholar':3,'factions.academy':5,'stats.charm':1})]),
+E('fei-mountain-toll','outlaw,trade','山口的两道税','山下巡检收过一次税，山上连寨还要再收。领路的少年说，寨里这两年修过三段桥，巡检却只在桥好以后才来立了关卡。',[
+ C('核算修桥开销，谈定一张通行票','你没能消掉两道税，但让同一支商队不再被重复盘剥。',{'routes.trade':3,'factions.blackflag':4,'stats.business':1}),
+ C('加入巡山，抵这一趟过路钱','山路走下来，你知道他们也怕真正杀人越货的散匪坏了规矩。',{'routes.outlaw':3,silver:18,'factions.blackflag':5}),
+ C('记下关卡，找巡按核查','你的记录多了一条难题：拆掉一个关卡之后，谁来修桥？',{'routes.official':3,'factions.censor':3,'inventory.manuscript':1})]),
+E('fei-false-flag','outlaw,martial','借来的黑旗','一群散匪挂着黑旗寨旗号劫了药车。寨里要你追查，免得官军借机围山。商队却不在乎是哪路人，只想把药找回来。',[
+ C('循车辙追查藏货处','',{'routes.outlaw':3},{check:{stat:'insight',difficulty:46},success:{text:'你在一处废窑找回药箱，旗子果然是临时缝上的。',effects:{'inventory.medicine':2,'factions.blackflag':6,'factions.guild':4}},failure:{text:'车辙在溪边断了。你只带回一段缝线，足以提醒寨里有人借名作恶。',effects:{health:-5,'factions.blackflag':2}}}),
+ C('请长风镖局协助找药','镖局与山寨第一次在同一张地图前说话，谁也没先拔刀。',{'routes.martial':3,'factions.escort':5,'factions.blackflag':2}),
+ C('把消息送到济世堂，先配替代药','药车没追回来，几位等药的人却先保住了性命。',{'routes.medicine':3,'factions.healers':6,morality:3})]),
+E('fei-hostage','outlaw','肉票的家书','寨里抓来的富户子弟想写家书。负责看守的人要他写得凄惨些，好多讨赎银。少年问你，若家里真的拿不出钱，是不是就回不去了。',[
+ C('阻止勒索，让他按实情写信','你得罪了想多分赎银的同伙，少年却第一次肯吃送来的饭。',{'routes.outlaw':3,'factions.blackflag':-2,morality:5,heat:-2}),
+ C('查清他家与灾民债务的关系','',{'routes.outlaw':3},{check:{stat:'strategy',difficulty:45},success:{text:'少年家并非债主，而是被债主推出来顶数的中间人。你替寨里避开一场错账。',effects:{'factions.blackflag':6,'stats.insight':1}},failure:{text:'账目绕得太深。你没能查清，只争取到不许伤人的承诺。',effects:{'stats.strategy':1}}}),
+ C('替他补上最低赎金','寨规没有改，人先出了山。你付钱时没有让他打欠条。',{'routes.medicine':2,morality:5,renown:2},{cost:{silver:30}})]),
+E('fei-new-chief','outlaw','一碗酒的盟誓','新入寨的人要歃血立誓，旧头领却在酒里添了药，声称不这样就没人肯听令。罗照夜看着你，手已经搭在刀鞘上。',[
+ C('当众掀开酒坛','你把所谓规矩摔在地上。有人拔刀，也有人第一次站到你身后。',{'routes.outlaw':4,'relations.luo':8,'factions.blackflag':-2,renown:3}),
+ C('悄悄换酒，先保住新人的命','今夜没有翻脸，旧头领却还在。你知道迟早要再作一次选择。',{'routes.outlaw':3,'stats.strategy':1,morality:2}),
+ C('请医者检验后再行盟誓','药的名字被叫出来时，那句忠义显得格外空。',{'routes.medicine':3,'factions.healers':3,'factions.blackflag':2})]),
+E('fei-stolen-pay','outlaw,official','劫来的军饷','山寨截下一车银子，箱底却有边军领饷的名册。有人说官银就是官银；也有人发现名册上有自己失散的兄长。',[
+ C('主张归还军饷，只扣运输凭证','你没让寨子大赚一笔，却保留了追查谁让饷车独行的线索。',{'routes.outlaw':3,'factions.army':6,'factions.blackflag':-2,'inventory.evidence':1,morality:3}),
+ C('留下银子，撕毁名册','众人分了银。火盆里的名字卷成灰，有人一夜没说话。',{'routes.outlaw':4,silver:55,heat:10,morality:-7,'factions.army':-8}),
+ C('借交还军饷，谈一条招安退路','官军答应先交换书信。每一张口头许诺，都还得另找担保。',{'routes.official':3,'factions.army':3,'factions.court':2,'flags.amnesty_contact':true})]),
+E('fei-back-door','outlaw,trade','钱庄的后门','齐九有一份钱庄暗库的换班图，却不肯说消息从何而来。他要找一个分账的人，也要找一个出事后最先被看见的人。',[
+ C('只查暗库是否藏着赈粮款','',{'routes.outlaw':3},{check:{stat:'strategy',difficulty:51},success:{text:'你没有碰钱，带出了另一套存根。它比银子更可能改变钱的去向。',effects:{'inventory.evidence':1,'factions.shadow':3,heat:4}},failure:{text:'你惊动了守夜人，翻墙时划伤手臂，只好空手离开。',effects:{health:-10,heat:6}}}),
+ C('冒险参与这场劫库','',{'routes.outlaw':4},{check:{stat:'strategy',difficulty:58},success:{text:'银箱被分开运走，换班图随即烧毁。齐九笑说，下次合作会更贵。',effects:{silver:80,heat:14,morality:-5,'factions.shadow':6}},failure:{text:'所谓暗库是个套。你甩开追兵，却留下了一段被人记住的身形。',effects:{silver:-25,health:-18,heat:18}}}),
+ C('拒绝，并告诫他图太新了','齐九笑容一顿，将图重新折好。你们都没再提这笔生意。',{'stats.insight':2,'relations.qi':3})]),
+E('fei-winter-list','outlaw,medicine','入冬的寨粮册','山寨的粮册上只登记能拿刀的人，老人和孩子被列作“随户”。分粮时，随户总是最后。有个孩子把空碗藏进衣服，不愿再排队。',[
+ C('按人头重新造册','有人担心自己的份额少了。你让他看看，老人孩子的碗究竟有多小。',{'routes.outlaw':3,morality:4,'relations.luo':5,'factions.blackflag':2}),
+ C('送两石粮到灶房','今晚的锅终于能煮得稠些。你知道这还不是过冬的全部办法。',{'routes.medicine':3,morality:4,'factions.blackflag':4},{cost:{'inventory.grain':2}}),
+ C('组织修桥换取山下粮钱','寨里第一次用木锯和绳索出山。商人没那么放心，却愿意先付一半。',{'routes.trade':3,'factions.guild':3,'factions.blackflag':3,silver:12})]),
+E('fei-whistle','outlaw,martial','三声夜哨','旧路上的接应暗号从两声变成三声，带路人说不过是防备官军。你发现他走的方向却是猎户早已废弃的落石沟。',[
+ C('假装继续，暗中换到高处','',{'routes.outlaw':3},{check:{stat:'strategy',difficulty:47},success:{text:'沟底果然伏着人。你让埋伏者以为目标改了日子，平安退回。',effects:{'stats.strategy':1,'factions.shadow':-3,renown:3}},failure:{text:'碎石暴露了脚步。你不得不硬闯一段山坡，才摆脱追赶。',effects:{health:-12,heat:4}}}),
+ C('亮明武器，当面追问','带路人承认家人被扣作担保。你们一起往另一条山路去了。',{'routes.martial':3,'stats.martial':1,morality:2}),
+ C('就此折返，记下异常','你损失了这一趟酬劳，保住了一条以后还能走的退路。',{'routes.outlaw':2,'stats.insight':1})]),
+E('wen-burning-book','scholar,official','焚书告示','刻坊收到禁毁书目的公文，其中一本只是乡民合写的灾年记。坊主说照办最省事，编书的老塾师却求你留下那些死者的姓名。',[
+ C('分抄姓名，寄往数地保存','同一本书化作许多封不显眼的家书，散进了各处灯火。',{'routes.scholar':4,'inventory.manuscript':1,'factions.academy':5,heat:3}),
+ C('核查禁令依据，申请复议','你没有立刻救下书，却争到一个不能马上点火的期限。',{'routes.official':3,'factions.censor':3,'stats.learning':1}),
+ C('只留下自己的记忆','你一遍遍默念那些名字。记得住也是一种抵抗，却终究不够长久。',{'routes.scholar':2,'stats.learning':2,morality:1})]),
+E('wen-land-deed','scholar,trade','学田的界石','书院与佃户争一片学田。旧契写的是河道为界，河道却已改了两次。两边都请你解释契文，双方的孩子也都在同一间塾里念书。',[
+ C('以旧地图与村人口述合勘','',{'routes.scholar':3},{check:{stat:'learning',difficulty:45},success:{text:'你找到一条被淤埋的旧水沟。双方同意按变迁后的收益重新分租。',effects:{'factions.academy':5,renown:4}},failure:{text:'地图与口述仍相互矛盾。你劝两边先停收争议的那部分租。',effects:{'stats.learning':1,renown:1}}}),
+ C('劝书院把争地改作共办义学田','租谷换成孩子们的纸笔，账仍得算，却不再只是两家的输赢。',{'routes.trade':2,'factions.academy':3,morality:3}),
+ C('替佃户写好申诉状','你在纸上写清了他们自己说不明白的三十年。',{'routes.official':3,'stats.charm':1,renown:2})]),
+E('wen-poem-banquet','scholar','宴上的好诗','乡绅请你赴诗宴，席间最受赞赏的一首诗，竟来自白日卖柴孩童随口唱的山谣。主人说民间句子，拿来润色便是自己的学问。',[
+ C('当众补上山谣的来处','宴席冷了片刻。一位年轻书生放下酒杯，请你再讲一遍那孩子的名字。',{'routes.scholar':3,morality:3,'factions.academy':2,renown:2}),
+ C('另写一首，暗示出处','你的诗被传抄，也带着那段原本会被掩去的山谣一起流传。',{'routes.scholar':3,'stats.learning':1,'inventory.manuscript':1}),
+ C('离宴后请孩童唱全山谣','你把歌记下，付了该有的酬劳，没有替它改成另一种腔调。',{'routes.scholar':2,'stats.insight':1,morality:2},{cost:{silver:6}})]),
+E('wen-map-error','scholar,trade','旧图上的断桥','商队按新刊舆图走到一条断桥前，图上桥旁还写着“车马可通”。桥实际已断五年，修图的人却从未离开过城里的刻坊。',[
+ C('勘误并记录附近渡口','你们绕了些路，也替后来的旅人少走一回冤枉路。',{'routes.scholar':3,'inventory.manuscript':1,'stats.insight':1,renown:2}),
+ C('雇船临时转运','分船、过水、再装车，你第一次算清了图上一笔带来的真实成本。',{'routes.trade':3,'stats.business':1},{cost:{silver:10}}),
+ C('带人修出仅供步行的便桥','货车过不去，背货的乡人总算不用再涉水。',{'routes.martial':2,'factions.smith':3,'stats.constitution':1})]),
+E('wen-debate','scholar,official','书院问难','书院辩论“荒年应先赈还是先稳粮价”。台上引经据典，门口卖饼的妇人只问：若等到议完，她今日的饼还能不能卖出去？',[
+ C('把摊贩与流民请进来同议','道理不再整齐，却开始有了今日和明日的分别。',{'routes.scholar':4,'stats.charm':1,'factions.academy':3,morality:2}),
+ C('列出仓粮、运力与户数试算','',{'routes.official':3},{check:{stat:'learning',difficulty:48},success:{text:'数字让争论落到能办的几件事上。你的方案被抄送州府。',effects:{'factions.court':4,renown:4}},failure:{text:'你低估了转运损耗，被船户指出。改过以后，方案终于能再往前一步。',effects:{'stats.business':1,'factions.canal':2}}}),
+ C('先买她剩下的饼分给门外的人','你暂时没有赢得辩论，却让几个人不用空着肚子等结论。',{'routes.medicine':2,morality:3},{cost:{silver:8}})]),
+E('wen-stolen-essay','scholar','失名的策论','你的策论被换了封皮，署上一个豪族子弟的名字。教谕劝你忍下，说以后总有机会。那人私下愿意付钱买断，还夸你写得像亲历一般。',[
+ C('出示草稿与见闻笔记','你要求的先是正名，再是名次。有人因此记住你不好相与。',{'routes.scholar':4,'factions.academy':-2,renown:4,'stats.learning':1}),
+ C('收钱，但保留继续署名刊行的权利','你把妥协写成契约，至少没有把自己的笔一并卖掉。',{'routes.trade':3,silver:30,'stats.business':1}),
+ C('另写续篇，公开实地资料','读到续篇的人开始追问，究竟谁真的去过那条河。',{'routes.scholar':3,'inventory.manuscript':1,'factions.censor':3})]),
+E('wen-village-school','scholar','祠堂里的女学','里正愿借祠堂办学，却说女童不能坐在祖先牌位前读书。几个母亲已把板凳搬来，站在门外不肯回去。',[
+ C('另开一间共学识字班','你没有等祠堂答应，先借茶棚上了第一课。',{'routes.scholar':3,morality:4,renown:3,'factions.academy':2}),
+ C('以乡约与典故争取入堂','',{'routes.scholar':3},{check:{stat:'learning',difficulty:47},success:{text:'你从家训里找出教养子女的原句，里正终于让开门槛。',effects:{'stats.learning':1,renown:4}},failure:{text:'里正坚持旧例。母亲们说，门外也能摆下三排凳子。',effects:{'stats.insight':1,morality:2}}}),
+ C('捐一套纸笔，请母亲们先教','课没有等一个有名望的人来主持，就自己开始了。',{'routes.scholar':2,'stats.charm':1,morality:3},{cost:{silver:12}})]),
+E('wen-courier-note','scholar,outlaw','信笺中的空白','替人誊信时，你发现每行末字连起来是一个山口地名。寄信人已走，收信人却是一位不理江湖的老学者。你不知道这是一封救命信还是传令书。',[
+ C('原样誊写，另留一份暗记','你没有擅自拆掉话里的话，也让自己有机会在日后辨认它。',{'routes.scholar':3,'inventory.manuscript':1,'stats.insight':1}),
+ C('亲自送信，观察收信人的反应','学者看完信，把一张旧矿契锁进盒子。他请你三天后再来。',{'routes.outlaw':3,'factions.shadow':3,'flags.cipher_seen':true}),
+ C('先向巡按台询问地名的来历','沈砚没有收走信，只说那里十年前曾有一座官矿。',{'routes.official':3,'relations.shen':4,'factions.censor':2})]),
+E('yi-price','medicine,trade','药柜上的新价签','药行听说邻县有疫，连夜改了价签。伙计说原料未涨，只是同行都在囤货。堂外的病人攥着昨日才凑齐的诊金。',[
+ C('按旧价配药，另寻稳定药源','你少赚了一笔，但病人不用再把药分成两天服。',{'routes.medicine':3,'factions.healers':5,morality:3,'factions.guild':-2}),
+ C('与药农订预购契约','你先付钱换来不随市价改动的下一批药，风险与保障一起落到肩上。',{'routes.trade':3,'inventory.medicine':2,'stats.business':1},{cost:{silver:28}}),
+ C('公开价格与替代药方','价签没立刻降下，病人却多了一种不必求人的选择。',{'routes.scholar':2,'routes.medicine':2,'inventory.formula':1,renown:3})]),
+E('yi-well','medicine,official','同一口井','一条巷子接连有人腹痛，井水看着清澈。里正不许封井，说没了井，整条街都得挑水。你发现上游染坊近日换了颜料。',[
+ C('验水并组织临时供水','',{'routes.medicine':3},{check:{stat:'insight',difficulty:45},success:{text:'水样沉出异色，染坊无法再推诿。临时水桶摆到了巷口。',effects:{renown:5,'factions.healers':5}},failure:{text:'你一时查不出成分，仍建议煮水与分流。病人没有立刻减少。',effects:{silver:-10,'stats.insight':1}}}),
+ C('请求官府先封排水口','公文来得慢，好在巷民愿意一同签名担责。',{'routes.official':3,'factions.court':2,morality:2}),
+ C('先逐户提醒，分发简易滤水布','每一家多费了些柴火，至少知道不能再放心喝生水。',{'routes.medicine':2,morality:3},{cost:{silver:10}})]),
+E('yi-enemy','medicine,outlaw','伤者腰间的牌','深夜送来的伤者佩着通缉令上的腰牌。帮他的人说是误会，追来的差役说若敢救治便是窝藏。伤者已经说不出自己的名字。',[
+ C('先止血，记录救治经过','你把刀伤、到诊时辰与在场者逐一记下。性命先留下，罪名仍须另查。',{'routes.medicine':4,morality:4,'factions.court':-2,'factions.healers':4}),
+ C('请差役守门，当着他们施治','门没有关上，你也没有退开诊桌。双方勉强接受了这个办法。',{'routes.official':2,'routes.medicine':2,'stats.charm':1}),
+ C('暗中将他转移到山里养伤','他醒来后只留下一个黑旗结，伤口之外的故事尚未说完。',{'routes.outlaw':3,'factions.blackflag':5,heat:5,'inventory.medicine':-1})]),
+E('yi-new-formula','medicine,scholar','廉价的替方','温见素配出一张不用贵药的替方，药行说未经名医题签，不得刊行。她请你把临床记录整理出来，别只凭一场口舌之争定对错。',[
+ C('逐份核对疗效与不良反应','',{'routes.medicine':3},{check:{stat:'insight',difficulty:48},success:{text:'你整理出适用与禁忌，没有把替方吹成包治百病。它终于能稳妥地传开。',effects:{'inventory.formula':1,'relations.wen':8,'stats.insight':1}},failure:{text:'记录中有几例相互矛盾。你们暂停刊方，先补随访。',effects:{'stats.learning':1,'relations.wen':3}}}),
+ C('资助抄印经过核验的部分','纸上特意空出待补的栏目。承认未知，也是在对用药的人负责。',{'routes.scholar':3,'factions.healers':5,'inventory.formula':1},{cost:{silver:18}}),
+ C('先把贵药省给确实需要的人','药柜里的紧张稍缓，每个人的药包却不再一模一样。',{'routes.medicine':2,morality:3,'factions.healers':3})]),
+E('yi-quack','medicine','神药的招牌','游医卖的神药包治百病，喝过的人短时精神大振，半日后却更虚弱。摊前围着许多人，都说既然见效快，贵些也值得。',[
+ C('检查药渣，当众说明风险','',{'routes.medicine':3},{check:{stat:'learning',difficulty:44},success:{text:'你指出其中的刺激药材。有人退开，也有人终于愿意把症状说全。',effects:{renown:4,'factions.healers':4}},failure:{text:'摊主抢走药渣，反说你妒忌。你只能先劝最虚弱的病人离开。',effects:{renown:-1,'stats.insight':1}}}),
+ C('带病人去有账可查的医馆复诊','你不许诺立刻治好，只让他们先得到一份能核对的诊断。',{'routes.medicine':3,morality:3},{cost:{silver:12}}),
+ C('记录受害者口供，递到县衙','这次递上的不是谁更像名医，而是一串有日期的病情。',{'routes.official':3,'factions.censor':3})]),
+E('yi-mountain-herb','medicine,martial','崖上的最后一株','急用的草药长在断崖边，药农说不能全采尽，否则来年便再没有了。病人的家属却求你一片叶也别留下。',[
+ C('冒险取药，留下根株','',{'routes.medicine':3},{check:{stat:'constitution',difficulty:46},success:{text:'你带回足够的叶，也在崖缝留下来春的希望。',effects:{'inventory.medicine':2,'stats.constitution':1}},failure:{text:'绳索磨断了一股。你护住少量药叶，手臂擦伤。',effects:{'inventory.medicine':1,health:-10}}}),
+ C('寻找药性接近的替代药','你与药农走遍两条山沟，终于找到能先缓解病情的草根。',{'routes.medicine':3,'stats.insight':1,'inventory.medicine':1}),
+ C('雇熟悉崖壁的采药人','他取药前先把成熟种子撒回石隙，说这是这片山借出的东西。',{'routes.trade':2,'inventory.medicine':2,morality:2},{cost:{silver:18}})]),
+E('yi-plague-report','medicine,official','不能上报的疫字','县里有人要求把“疫”改成“时疾”，好让考成不受牵连。温见素说名字可以改，隔离屋、饮水和药材却一项都不能少。',[
+ C('按实报告，附上处置办法','你的文书让县令难堪，也让申请物资终于有了足够分量的理由。',{'routes.medicine':3,'routes.official':2,'factions.court':-3,'factions.healers':5,renown:4}),
+ C('暂用时疾之名，先落实物资','你先拿到空屋和柴米，另留一份未改的病录，准备补报。',{'routes.official':3,'stats.strategy':1,'inventory.manuscript':1}),
+ C('自筹一处临时诊棚','棚不大，至少不用再把发热者挤在同一间客栈。',{'routes.medicine':3,morality:4,renown:2},{cost:{silver:25}})]),
+E('yi-unpaid','medicine,trade','赊诊本最后一页','药庐的赊诊本写满了，掌柜说再不收钱就发不起伙计工钱。欠得最多的病人家里，唯一能卖的牛已经卖给了药行。',[
+ C('分开急救与长期欠款，订偿付办法','你没有一笔勾销所有账，也没有让眼下没钱的人失去下一次进门的资格。',{'routes.medicine':3,'stats.business':1,'factions.healers':3}),
+ C('出钱补一部分伙计工钱','伙计不用再靠自己的忍耐支撑善意。诊桌照常开了门。',{'routes.trade':2,morality:4,'factions.healers':5},{cost:{silver:20}}),
+ C('请病愈者轮流协助杂务','有的人来挑水，有的人帮识字。一本账开始记下银钱之外的往来。',{'routes.medicine':3,'stats.charm':1,renown:2})]),
+E('life-lost-purse','all','桥边的钱袋','你捡到一个缝着小字的钱袋，里面的钱刚够买半个月粗粮。不远处有个赶路人不断回头，像在找什么，又不敢停下。',[
+ C('追上去核对失物','对方说对了袋角的小字，接过钱袋时长长松了一口气。',{'stats.charm':1,morality:3,renown:1}),
+ C('交给桥边茶摊登记失物','茶摊老板把袋子挂到柜后，也把你的名字记在一张纸上。',{'routes.trade':1,morality:2}),
+ C('留下钱袋','没人看见你弯腰的那一刻。你把细碎铜钱放进自己的行囊。',{silver:16,morality:-4})]),
+E('life-temple','all','荒寺借宿','大雨封住去路，荒寺里挤着商人、挑夫和一个缄默的官差。有人提议各讲一段最近的见闻，免得漫漫长夜只剩雷声。',[
+ C('讲自己走过的路','你说出几件算不上大事的亲历，却听见别人讲了同一件事的另一面。',{'stats.insight':1,health:3}),
+ C('替年长的挑夫揉开伤腿','老挑夫不再皱着眉睡觉，临走告诉你一处不会涨水的旧渡。',{'routes.medicine':2,morality:2}),
+ C('与官差讨论沿途盘查','他脱下湿靴，说起公文上没有写的那些难处。',{'routes.official':2,'factions.court':2})]),
+E('life-festival','all','灯节的一盏灯','城里过灯节，卖灯人说每盏灯都能写一个愿望。桥下却有人替不识字的家人念寄回来的信，声音压得比水声还低。',[
+ C('替他们回一封家书','你写得很慢，把想说与不敢说的话都等到了。',{'routes.scholar':2,'stats.charm':1,morality:2}),
+ C('买一盏灯，留给自己','你写下一个没打算告诉别人的愿望，放在风吹不到的窗边。',{health:10},{cost:{silver:5}}),
+ C('去灯市看看摊贩如何做生意','好位置、好故事与适时降价，比灯穗的颜色更影响今晚的收入。',{'routes.trade':2,'stats.business':1})]),
+E('life-rumor','all','茶摊三种说法','同一趟运粮船，有人说被山匪劫走，有人说沉在暗礁，还有人说船根本没离过港。茶博士只添水，说每个人都肯为自己的说法赌一文钱。',[
+ C('只记下能核对的时辰与船名','三种故事留下了同一个夜晚。你开始明白，真话也可能被分开讲。',{'stats.insight':1,'routes.official':1}),
+ C('请熟悉水路的人画出航线','纸上多了一个没有记进官图的停靠点。',{'routes.trade':2,'factions.canal':2,'inventory.manuscript':1}),
+ C('听完便走，先顾自己的行程','传闻仍在身后继续，你给自己留了一点不必立即站队的余地。',{health:3})]),
+E('life-fire','all','夜市失火','油灯翻进了布棚。商贩抢货，行人拥挤，一个孩子被困在棚架内。你离得不远，火还没有完全吞上横梁。',[
+ C('冲进去救人','',{}, {check:{stat:'constitution',difficulty:43},success:{text:'你护着孩子滚到棚外，衣袖烧破，手还算稳。',effects:{health:-5,renown:5,morality:4,'routes.martial':2}},failure:{text:'你救下孩子，却被倒下的竹架砸伤肩膀。',effects:{health:-18,renown:3,morality:4}}}),
+ C('组织人群传水、清出通道','几桶水压住火势，棚边终于有了能够逃生的空隙。',{'routes.official':2,'stats.strategy':1,renown:3}),
+ C('先把附近的油桶滚走','你阻止了火继续蔓延，没人特别注意到，是哪只手搬开了最后一个桶。',{'stats.insight':1,morality:3})]),
+E('life-injured-horse','all','跛脚的驮马','脚夫准备低价卖掉一匹跛马。他说不是舍不得，只是再拖两天，自己和马都得挨饿。马蹄里似乎卡着一截暗色的东西。',[
+ C('检查蹄伤','',{'routes.medicine':2},{check:{stat:'insight',difficulty:39},success:{text:'你取出一截木刺，伤口并不深。脚夫牵走马时，脚步比来时轻了许多。',effects:{morality:3,'stats.insight':1,renown:2}},failure:{text:'马挣扎着不肯抬蹄，你不敢乱动，只替脚夫找来熟悉牲口的匠人。',effects:{silver:-5,morality:2}}}),
+ C('给他几日的草料钱','这笔钱不足以改变生计，但至少让他不用在今天作最后决定。',{morality:3},{cost:{silver:8}}),
+ C('替他打听不会虐待牲口的买主','你们问了半条街，总算谈到一个能让他放心的价。',{'routes.trade':2,'stats.charm':1})]),
+E('life-old-soldier','all','石阶上的旧甲','老兵在城门边卖甲，里衬还缝着同袍的姓名。他说不是卖纪念，只是孙子等着吃饭，死人不会再怪他。',[
+ C('买下甲，记下甲里的名字','你付的是铁钱，带走的却是一小段没人写进捷报的战争。',{'inventory.manuscript':1,'factions.army':3,morality:2},{cost:{silver:18}}),
+ C('替他写一份补领抚恤的呈文','公文的路还长，他总算知道该先敲哪一扇门。',{'routes.official':2,'routes.scholar':1,renown:2}),
+ C('请他吃一顿热饭','你没有许下能替他解决一切的诺言，只把碗添满。',{morality:2,health:3},{cost:{silver:5}})]),
+E('life-gambler','all','稳赢的那一局','赌坊门前有人向你展示一套“包赢”的算法。围观的人里，已经有三个连续赢了钱，第四个人正准备押上回乡的盘缠。',[
+ C('观察他们彼此递眼色的时机','你看出三个赢家在轮流换座，便劝第四个人先摸清桌底的机关。',{'stats.insight':2,'routes.outlaw':1}),
+ C('用算筹拆解所谓算法','概率没有给任何人包赢的承诺，那个人默默收回了钱袋。',{'routes.scholar':2,'stats.learning':1,morality:1}),
+ C('离开赌桌，保住盘缠','你没从这局里赢钱，也没把今天的口粮变成一个明日才会悔恨的念头。',{'stats.strategy':1})]),
+E('life-snow','all','关门前的雪','寒潮来得突然，客栈只剩一间柴房。掌柜说本来不住人，要收双倍房钱；门外几名脚夫也在打听有没有地方躲风。',[
+ C('合租柴房，腾出一角给脚夫','夜里有人打鼾，有人添柴。风雪没有变小，屋里却渐渐暖了。',{health:12,morality:3},{cost:{silver:8}}),
+ C('替客栈劈柴换宿','你们添满一垛柴，掌柜最后还是端来了一锅热汤。',{'stats.constitution':1,health:6}),
+ C('到驿站询问临时安置','驿卒腾出旧马棚，并让每个人留下姓名，免得天亮后走失。',{'routes.official':2,'factions.court':2})]),
+E('life-ancestral-debt','all','隔年的债','有人认出你的姓氏，说你长辈多年前欠过他一笔钱。凭据已经模糊，只剩一个与你家乡相近的地址。也许是旧债，也许认错了人。',[
+ C('先把人和日期核对清楚','你们发现欠债者只是同姓。对方有些窘迫，你也替他补写了清楚的寻人纸条。',{'stats.insight':1,'routes.official':1}),
+ C('留一笔路费，让他继续找人','钱不是认债，只是让一位走了很远的人不必空着肚子再走下去。',{morality:3,'stats.charm':1},{cost:{silver:8}}),
+ C('记下地址，等有机会回乡再问','你没有随口认下，也没有让他失去最后一条可以核实的线。',{'routes.scholar':1,'inventory.manuscript':1})]),
+E('life-twin-brothers','all','两个人的名字','一对兄弟只拿到一份雇工名额，兄长说先让弟弟去，弟弟却把名帖塞回兄长手里。他们的母亲在旁边，一句话也没说。',[
+ C('替他们问另一家作坊','你们多跑了两条街，总算找到第二份短工，虽然工钱少些。',{'routes.trade':2,'factions.smith':2,morality:2}),
+ C('让两人合写技能与经历，再谈轮班','作坊答应试用，不再只凭谁先抢到一张纸。',{'routes.official':1,'stats.charm':1,renown:1}),
+ C('给母亲送一碗热粥','她终于肯坐下。你没有替两兄弟决定谁该牺牲。',{morality:2},{cost:{silver:4}})]),
+E('life-wooden-toy','all','机关鸟','小匠人带着会拍翅的木鸟赶集，旁边的富商想买断做法。小匠人很想要那笔钱，又怕此后再不能自己做同样的鸟。',[
+ C('教他区分卖一只与卖做法','他把价重新分开写，富商虽嫌麻烦，终究愿意坐下来谈。',{'routes.trade':2,'factions.smith':3,'stats.business':1}),
+ C('买一只，支持他自己继续做','木鸟拍得不算平稳，却能停在你行囊边，陪你看下一段路。',{'factions.smith':4,health:5},{cost:{silver:9}}),
+ C('替他画一份工序草图留底','草图上落着他的名字，至少这次，手艺有了能指认的来处。',{'routes.scholar':2,'inventory.manuscript':1})]),
+E('life-refugee-dog','all','渡口的小狗','一只瘦狗叼着破布拦住渡船。船夫嫌它碍事，你顺着它跑来的方向看去，芦苇后似乎有一只翻倒的木盆。',[
+ C('跟去看一眼','木盆下压着一个被困的孩子。你把人抱回岸边，狗一直跟在后面。',{morality:4,renown:2,'routes.martial':1}),
+ C('叫上船夫一起找','两个人把木盆翻开。船夫低头看了看狗，将午饭分给它一块。',{'stats.charm':1,'factions.canal':3,morality:3}),
+ C('先停船，向附近人询问','有人认出那块布，急急忙忙跑进芦苇丛，喊出一个孩子的乳名。',{'stats.insight':1,morality:2})]),
+E('life-weather-bet','all','看云的人','老农说三日内必有大雨，粮商说晴得正好适合转运。码头正在争要不要把粮袋从露天堆场搬进仓，搬一次就多一笔工钱。',[
+ C('检查风向、水位与云层','',{}, {check:{stat:'insight',difficulty:42},success:{text:'你找到几项一致的征兆，劝成了提前入仓。那夜雨果然落得很急。',effects:{'routes.trade':2,silver:18,'factions.canal':2}},failure:{text:'你判断不清，便建议只先遮住最怕湿的一批。多花一点工钱，总比全押天气稳妥。',effects:{'stats.insight':1}}}),
+ C('出钱请脚夫先搬最底下的粮袋','湿气最容易从地面进来，你保住了一部分最早会坏掉的粮。',{'routes.trade':2,morality:2},{cost:{silver:8}}),
+ C('把两种判断都记进日记','你准备三日后再看，谁的经验适合哪一种天气。',{'routes.scholar':2,'inventory.manuscript':1})]),
+E('life-fake-officer','all','穿官靴的陌生人','一个衣着体面的陌生人说能替你引荐官职，只需先交疏通费。他的靴是官式，腰带的系法却不像衙门中人。',[
+ C('请他先说清缺额与考校程序','对方越说越含糊，最后借口取文书溜走了。',{'routes.official':2,'stats.learning':1}),
+ C('暗中记住他的去向','你发现他很快又换了一条腰带，在钱庄外改称官商。',{'routes.outlaw':2,'stats.insight':1}),
+ C('婉拒，继续自己的事','你把钱花在了真实的下一顿饭上，心里倒很踏实。',{'stats.strategy':1,health:3})]),
+E('life-unfinished-letter','all','没有送出的信','客栈打扫出一封未寄的信，写信人已经离店。信中约定去一座城找失散的亲人，却没写收信人的门牌，只有一棵老槐树。',[
+ C('抄下线索，托商旅沿路打听','你没有承诺一定找到，却让这封信重新开始往外走。',{'routes.trade':1,'stats.charm':1,morality:2}),
+ C('替客栈做一本待领信簿','迟来的人总算有一处能问，没送到的信也有了安放的位置。',{'routes.scholar':2,'inventory.manuscript':1}),
+ C('把原信封好，交回柜上','你没有因为好奇把它变成众人的谈资。',{morality:2,health:2})]),
+E('cross-poisoned-cargo','trade,medicine,outlaw','粮袋中的药味','商队的粮袋里夹着几包驱虫药，药味却与病人呕吐物相似。货主催着发船，寨里又有人在等这批低价粮过冬。',[
+ C('暂停交货，取样检验','',{'routes.medicine':3},{check:{stat:'insight',difficulty:49},success:{text:'药包破损污染了粮。你截下一场可能沿商路扩散的病灾。',effects:{renown:5,'factions.healers':5,'factions.guild':-2}},failure:{text:'你无法迅速确诊，货主索赔误期钱。你仍劝所有人不要食用。',effects:{silver:-18,morality:3}}}),
+ C('通知寨里别急着收粮','寨里换了收货地点，也改了收货方式。有人开始愿意听医者说话。',{'routes.outlaw':3,'factions.blackflag':6,'factions.healers':2}),
+ C('找商盟垫款隔离整批货','你替几方算清眼前损失与可能的更大损失，货船暂时停了下来。',{'routes.trade':3,'stats.business':1,'factions.guild':3},{cost:{silver:12}})]),
+E('cross-student-bandit','scholar,outlaw,official','学生在山里','山路上替你带路的人认出了你抄过的文章。他曾在书院读书，家里破产后入了寨，如今替寨里孩子授课。书院却把他写作“自甘堕落”。',[
+ C('请他把来龙去脉写下来','他写了半夜，第一段不是替自己辩白，而是记下村里何时断了水。',{'routes.scholar':3,'inventory.manuscript':1,'factions.blackflag':3}),
+ C('替他联系可作担保的旧师','一封回信进了山，没有赦免，也没有训诫，只有一句先别停课。',{'routes.official':3,'factions.academy':3,'factions.blackflag':2}),
+ C('留下几本识字册','山寨多了几本不教杀人的书，带路人的笑容比来时轻了。',{'routes.scholar':2,morality:3},{cost:{silver:10}})]),
+E('cross-sword-for-sale','martial,trade,official','师门抵押的剑','剑会为赈灾抵押了一批门内藏剑，商盟约定到期收货。如今粮已发完，赎剑的钱却没凑够。弟子要求你站在道义一边，商人也有自己的欠款。',[
+ C('重议分期，以后续镖运抵息','你让剑会担起可兑现的责任，也让商人不必把善意当成全部损失。',{'routes.trade':3,'factions.guild':4,'factions.sword':4,'stats.business':1}),
+ C('替剑会募一场公开比武筹款','招牌写清每一笔去向，来的人有看热闹的，也有真想帮忙的。',{'routes.martial':3,renown:3,'factions.sword':5}),
+ C('坚持按原契交剑','你承认赈灾的善意，却没有据此抹去另一方的权利。',{'routes.official':3,'factions.guild':4,'factions.sword':-3,morality:1})]),
+E('cross-mine-sickness','medicine,official,outlaw','矿尘里的咳嗽','矿工的咳嗽被记作个人体弱，矿主说与工场无关。逃进山寨的矿工请你证明病因，衙门则希望你在报告里少写几个会惹事的字。',[
+ C('比较工龄与病情，写出调查','',{'routes.medicine':3},{check:{stat:'learning',difficulty:50},success:{text:'不同工龄的病录摆在一起，不能再用天生体弱解释。百工盟拿到了一份可以公开的依据。',effects:{'factions.smith':7,'factions.healers':4,renown:4}},failure:{text:'记录不全，你只能写成初步判断。矿工仍感谢你没有替他们改成别的病名。',effects:{'factions.smith':3,'stats.learning':1}}}),
+ C('联络山寨转移重病者','山路上多了几副担架。你避开眼前的阻拦，也让自己与寨子绑得更紧。',{'routes.outlaw':3,'factions.blackflag':5,heat:4,morality:3}),
+ C('从安全支护与换班条款谈起','矿主不肯认账，却同意先补上几项能查验的措施。',{'routes.official':3,'factions.smith':4,'stats.strategy':1})]),
+E('cross-marriage-alliance','trade,official,martial','婚帖与商契','两家要以联姻合并商路，婚帖后附着货栈的分成。被安排出嫁的人却想去学剑。她问你，能不能替自己送一封并不讨喜的回信。',[
+ C('帮她写明自己的意愿','信没有代替她作决定，只让她的决定第一次清清楚楚落到纸上。',{'routes.scholar':2,morality:4,'stats.charm':1}),
+ C('替两家设计不靠婚约的合作契','你证明一条商路可以依靠担保与分账，未必要押上一个人的一生。',{'routes.trade':3,'stats.business':1,'factions.guild':3}),
+ C('联系愿意收徒的剑馆','她仍须自己说服家里，但门外已经有一个真实可去的地方。',{'routes.martial':3,'factions.sword':3,morality:2})]),
+E('cross-bridge-cut','outlaw,official,trade','该不该断的桥','官军追剿将至，山寨想砍断商桥阻兵。桥一断，山下三个村也会断盐。商人愿意出钱买缓兵，官军却不承认私下谈判。',[
+ C('保桥，另设不伤民路的路障','',{'routes.outlaw':3},{check:{stat:'strategy',difficulty:51},success:{text:'新的路障拖住追兵，也给山下留下了过人运盐的窄道。',effects:{'factions.blackflag':5,'factions.guild':4,morality:3}},failure:{text:'路障很快被拆。寨子撤退时丢了物资，桥至少还在。',effects:{'factions.blackflag':-3,morality:2}}}),
+ C('持商民联名请求暂缓进兵','你没有为寨子担保，只为桥两头仍需吃饭的人争取三天。',{'routes.official':3,'factions.court':-2,renown:4}),
+ C('组织商队先把盐粮送过桥','这不能阻止断桥，却让村子多出一点不必立即挨饿的时间。',{'routes.trade':3,'factions.guild':3,morality:2},{cost:{silver:15}})]),
+E('cross-hidden-invoice','official,trade,scholar','一张货单两种墨','新货单用了两种墨，后添的部分刚好能把亏空抹平。账房说只是誊写疏忽；你认得其中几行字，与旧河仓账上的笔迹相似。',[
+ C('将两份字迹与船次并列核对','',{'routes.official':3},{check:{stat:'insight',difficulty:47},success:{text:'补墨的日期晚于船只离港。你拿到一份无法用疏忽解释的物证。',effects:{'inventory.evidence':1,'factions.censor':4}},failure:{text:'缺少原始船次，你只能把疑点抄下，没有贸然指认。',effects:{'inventory.manuscript':1,'stats.insight':1}}}),
+ C('与账房单独谈谈是谁让他添字','他没有供出姓名，却说这批货原本是送往北庭的。',{'routes.trade':3,'factions.army':2,'stats.charm':1}),
+ C('只存副本，等待更多印证','你把纸压进书页，知道一份有用的证据也需要活到能被使用的那一天。',{'routes.scholar':3,'inventory.manuscript':1})]),
+E('cross-sea-paper','trade,outlaw,official','两张出海文牒','一艘船有两张文牒，一张去外海，一张沿岸运粮。船主说变通才能活命，水手却担心一旦遇险，官府会按另一张文牒把他们当成私盗。',[
+ C('要求统一航线与雇工契约','船主骂了一句多事，最终重签文书。水手总算知道自己去哪里。',{'routes.trade':3,'factions.guild':2,morality:3}),
+ C('帮船主打通夜渡暗线','船按原计划离港，你得到酬劳，也在两张文牒之间留下了自己的名字。',{'routes.outlaw':3,silver:30,heat:5,'factions.shadow':4}),
+ C('为水手抄存两张文牒留证','未必每个人都用得上，真到需要时却不会再只剩船主一种说法。',{'routes.official':2,'inventory.manuscript':1,morality:2})]),
+E('cross-famine-exam','scholar,official,medicine','考棚与粥棚','地方把粥棚迁走，给今年的童试腾位置。考生说不能误功名，灾民说不能误今日的饭。两边都拿着盖了印的通知。',[
+ C('借空院分流，重新排布两处场地','你请两边各派人量了一次院子，争执终于变成了能搬动的桌凳。',{'routes.official':3,'stats.strategy':1,renown:3}),
+ C('劝考生分出半日帮忙迁棚','识字的人先读懂了眼前的饥饿，粥棚也很快有了新的灶。',{'routes.scholar':3,'factions.academy':3,morality:3}),
+ C('先买一锅热粥，不让人空等','你解决不了所有场地之争，至少没把今日的饭推到明日。',{'routes.medicine':2,morality:3},{cost:{silver:12}})]),
+E('cross-funeral','martial,outlaw,scholar','不能入册的死者','一名少年死在剿匪战里，官府称匪，山寨称义士，师门称叛徒。母亲只想在墓碑上刻回他的本名，请你替她写。',[
+ C('写姓名、生卒，不替任何一方下评语','石匠逐字刻完，母亲终于抬手摸了摸石面。这个名字得以留下。',{'routes.scholar':3,morality:4,'inventory.manuscript':1}),
+ C('走访三方，把矛盾的证词都记录下来','你没有拼出一个干净的英雄或恶人，只留下一个曾经真实活过的人。',{'routes.official':2,'stats.insight':2}),
+ C('替她付刻碑的钱','母亲没有再解释儿子到底是什么人，只低低说了一声谢谢。',{morality:4,'routes.martial':1},{cost:{silver:14}})]),
+E('cross-truce-doctor','medicine,martial,outlaw','停刀两个时辰','两派械斗都有人受伤，温见素要求停刀两个时辰施救。两边都答应了，又都担心对手借机调人。她需要一个愿意在中间作保的人。',[
+ C('亲自守住诊棚外的兵器架','',{'routes.martial':3},{check:{stat:'martial',difficulty:48},success:{text:'两个时辰过去，刀没有重新出鞘。有人看着对面伤员的绷带，放低了声音。',effects:{'factions.healers':5,renown:4,'relations.wen':4}},failure:{text:'有人抢先拔刀，你挡住第一下，诊棚还是被迫提早转移。',effects:{health:-12,'factions.healers':3}}}),
+ C('让双方各派一人陪同救治','相互监视渐渐变成了递水、剪布。停刀没有完全解决仇怨，却不再只靠一句话。',{'routes.medicine':3,'stats.charm':1,morality:3}),
+ C('联络漕帮准备一条撤伤员的船','若停刀失败，仍有一条路能让伤者先离开。',{'routes.outlaw':2,'factions.canal':4,'factions.healers':2})]),
+E('cross-press','scholar,trade,outlaw','印刷一份真相','刻坊愿意印你的调查，却要求匿名；商人愿意出钱，却想删去自己同行的名字；夜渡社愿意散发，却希望保留一段独家消息。',[
+ C('拆开筹资、刊印与散发，各留凭证','你没让任何一方独占全程，真相因此多走了几道工序，也多活了几种可能。',{'routes.scholar':3,'stats.strategy':1,renown:3,'factions.academy':3}),
+ C('自己付钱，按证据完整刊行','纸张与墨钱花了出去，书页上没有多出一个出资人要求的空白。',{'routes.scholar':4,'inventory.manuscript':1,renown:4},{cost:{silver:25}}),
+ C('先把已核实的部分做成传单','未核实的留作待查，已发生的先让更多人知道。',{'routes.trade':2,'stats.business':1,'factions.shadow':2})])
+];
+if(typeof module!=='undefined'&&module.exports)module.exports=events;root.SHANHE_ENCOUNTERS=events;
+})(typeof window!=='undefined'?window:globalThis);
