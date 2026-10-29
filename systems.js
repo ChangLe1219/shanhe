@@ -3,9 +3,42 @@
 function install(Game){
 const P=Game.prototype,base={};for(const k of ['create','start','load','ready','apply','event','choose','probability','build','act','useMedicine'])base[k]=P[k];
 const cp=x=>JSON.parse(JSON.stringify(x)),cap=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ACHIEVEMENTS=[
+ {id:'first-step',category:'江湖人生',icon:'行',name:'初入江湖',desc:'开始你的第一段人生。',goal:1,measure:g=>Number(g.s.started)},
+ {id:'first-choice',category:'江湖人生',icon:'择',name:'落下第一子',desc:'作出一次会留下回响的选择。',goal:1,measure:g=>g.s.achievementBook.stats.choices},
+ {id:'hundred-choices',category:'江湖人生',icon:'卷',name:'百转人生',desc:'累计作出一百次选择。',goal:100,measure:g=>g.s.achievementBook.stats.choices},
+ {id:'many-stories',category:'江湖人生',icon:'闻',name:'见多识广',desc:'亲历四十段不同事件。',goal:40,measure:g=>Object.keys(g.s.seen).length},
+ {id:'all-paths',category:'江湖人生',icon:'道',name:'六道皆行',desc:'武道、行商、官路、绿林、学问与医道均有所涉。',goal:6,measure:g=>Object.values(g.s.routes).filter(v=>v>0).length},
+ {id:'route-master',category:'江湖人生',icon:'峰',name:'一艺登峰',desc:'任一道路阅历达到一百。',goal:100,measure:g=>Math.max(0,...Object.values(g.s.routes))},
+ {id:'first-travel',category:'行旅经营',icon:'途',name:'行路初远',desc:'抵达三座不同城镇。',goal:3,measure:g=>g.s.achievementBook.stats.visitedCities.length},
+ {id:'world-traveler',category:'行旅经营',icon:'山',name:'行遍八方',desc:'抵达八座不同城镇。',goal:8,measure:g=>g.s.achievementBook.stats.visitedCities.length},
+ {id:'all-cities',category:'行旅经营',icon:'河',name:'踏遍山河',desc:'走过天下十六城。',goal:16,measure:g=>g.s.achievementBook.stats.visitedCities.length},
+ {id:'many-trades',category:'行旅经营',icon:'算',name:'铁算盘',desc:'完成五十笔买卖。',goal:50,measure:g=>g.s.achievementBook.stats.tradeDeals},
+ {id:'trade-profit',category:'行旅经营',icon:'利',name:'商有厚利',desc:'累计实现买卖毛利五千两。',goal:5000,measure:g=>g.s.achievementBook.stats.tradeProfit},
+ {id:'first-estate',category:'行旅经营',icon:'业',name:'开张大吉',desc:'置办第一处产业。',goal:1,measure:g=>g.s.assets.length},
+ {id:'estate-network',category:'行旅经营',icon:'铺',name:'遍地生根',desc:'在五座城镇置办产业。',goal:5,measure:g=>new Set(g.s.assets.map(a=>a.city)).size},
+ {id:'estate-growth',category:'行旅经营',icon:'兴',name:'百业兴旺',desc:'名下产业总规模达到十级。',goal:10,measure:g=>g.s.assets.reduce((n,a)=>n+a.level,0)},
+ {id:'practice-30',category:'修习人脉',icon:'勤',name:'勤学不辍',desc:'完成三十次修习或闭关。',goal:30,measure:g=>g.s.achievementBook.stats.practiceSessions},
+ {id:'skill-max',category:'修习人脉',icon:'熟',name:'技近乎道',desc:'任一项本领熟练度达到一百。',goal:100,measure:g=>Math.max(0,...Object.values(g.s.skills))},
+ {id:'known-20',category:'修习人脉',icon:'友',name:'四海皆故人',desc:'结识二十位人物。',goal:20,measure:g=>g.s.known.length},
+ {id:'close-friend',category:'修习人脉',icon:'信',name:'莫逆之交',desc:'与一位故人好感达到八十。',goal:80,measure:g=>Math.max(0,...Object.values(g.s.relations))},
+ {id:'home',category:'家族传承',icon:'家',name:'安家立业',desc:'为家人置办一处宅邸。',goal:1,measure:g=>Number(!!g.s.family.home)},
+ {id:'married',category:'家族传承',icon:'缘',name:'良缘相守',desc:'与一位伴侣结为正配。',goal:1,measure:g=>Number(g.s.family.members.some(n=>n.ownerId===g.s.actorId&&['wife','husband'].includes(n.role)))},
+ {id:'many-children',category:'家族传承',icon:'子',name:'多子多福',desc:'同一代家主养育十名子女。',goal:10,measure:g=>g.s.family.members.filter(n=>n.fatherId===g.s.actorId||n.motherId===g.s.actorId).length},
+ {id:'both-lineages',category:'家族传承',icon:'嫡',name:'嫡庶同堂',desc:'同一代家主留下嫡出与庶出子女。',goal:1,measure:g=>{const k=g.s.family.members.filter(n=>n.fatherId===g.s.actorId||n.motherId===g.s.actorId);return Number(k.some(n=>n.lineage==='嫡')&&k.some(n=>n.lineage==='庶'));}},
+ {id:'three-generations',category:'家族传承',icon:'承',name:'三世同堂',desc:'家族传承至第三代。',goal:3,measure:g=>g.s.generation},
+ {id:'succession',category:'家族传承',icon:'薪',name:'薪火相传',desc:'完成一次正式传家。',goal:1,measure:g=>g.s.family.history.length},
+ {id:'faithful',category:'家族传承',icon:'心',name:'痴情种',desc:'一生只有正配、未纳妾室，并与伴侣相守至人生落幕。',goal:1,measure:g=>{const s=g.s,sp=s.family.members.filter(n=>n.ownerId===s.actorId&&['wife','husband'].includes(n.role)),conc=s.family.members.some(n=>n.ownerId===s.actorId&&n.role==='concubine');return Number(!s.alive&&sp.length>0&&!conc);}},
+ {id:'eighty-years',category:'家族传承',icon:'松',name:'松鹤延年',desc:'年满八十岁。',goal:80,measure:g=>g.ageNow()},
+ {id:'centenarian',category:'家族传承',icon:'百',name:'百岁老人',desc:'年满一百岁。',goal:100,measure:g=>g.ageNow()},
+ {id:'good-name',category:'江湖人生',icon:'名',name:'流芳一方',desc:'江湖声望达到一百。',goal:100,measure:g=>g.s.renown},
+ {id:'kind-heart',category:'江湖人生',icon:'善',name:'仁心有报',desc:'善名积累至八十。',goal:80,measure:g=>g.s.morality},
+ {id:'notorious',category:'江湖人生',icon:'影',name:'恶名远扬',desc:'恶名积累至八十。',goal:80,measure:g=>g.s.heat}
+];
 P.setupSystems=function(){
- const s=this.s;s.systemsVersion=3;s.known??=[];s.locations??={};s.letters??=[];s.markets??={};s.basis??={};s.tradeLedger??=[];s.journey??=null;s.incident??=null;s.travelHistory??=[];s.estateLedger??=[];s.estateDay??=0;s.ageAtDay??=1;s.generation??=1;s.actorId??='founder';s.alive??=true;s.legacy??={};s.identities??={office:0,sect:0,sectLeader:false};s.peopleExtra??=[];
+ const s=this.s;s.systemsVersion=4;s.known??=[];s.locations??={};s.letters??=[];s.markets??={};s.basis??={};s.tradeLedger??=[];s.journey??=null;s.incident??=null;s.travelHistory??=[];s.estateLedger??=[];s.estateDay??=0;s.ageAtDay??=1;s.generation??=1;s.actorId??='founder';s.alive??=true;s.legacy??={};s.identities??={office:0,sect:0,sectLeader:false};s.peopleExtra??=[];
  s.family??={home:null,members:[],pregnancies:[],heir:null,history:[],fertility:true};
+ s.achievementBook??={unlocked:{},stats:{}};if(!s.achievementBook||typeof s.achievementBook!=='object'||Array.isArray(s.achievementBook))s.achievementBook={unlocked:{},stats:{}};if(!s.achievementBook.unlocked||typeof s.achievementBook.unlocked!=='object'||Array.isArray(s.achievementBook.unlocked))s.achievementBook.unlocked={};if(!s.achievementBook.stats||typeof s.achievementBook.stats!=='object'||Array.isArray(s.achievementBook.stats))s.achievementBook.stats={};const tradeProfit=(s.tradeLedger||[]).reduce((n,x)=>n+Math.max(0,x.profit||0),0);for(const [key,value]of Object.entries({choices:Object.keys(s.seen||{}).length,practiceSessions:0,tradeDeals:(s.tradeLedger||[]).length,tradeProfit}))if(!Number.isFinite(s.achievementBook.stats[key])||s.achievementBook.stats[key]<0)s.achievementBook.stats[key]=value;const hadVisited=Array.isArray(s.achievementBook.stats.visitedCities),visited=hadVisited?s.achievementBook.stats.visitedCities.filter(id=>this.w.cities.some(c=>c.id===id)):[s.city,...(s.travelHistory||[]).map(x=>x.to)].filter(id=>this.w.cities.some(c=>c.id===id));s.achievementBook.stats.visitedCities=[...new Set(visited)];
  if(!s.family.members.some(n=>n.id===s.actorId))s.family.members.push({id:s.actorId,name:s.name,gender:s.gender,birthDay:s.ageAtDay-s.age*360,role:'家主',generation:s.generation});
  const actor=s.family.members.find(n=>n.id===s.actorId);if(actor){actor.name=s.name;actor.gender=s.gender;if(s.actorId==='founder')actor.birthDay=s.ageAtDay-s.age*360;}
  for(const p of this.people()){s.relations[p.id]??=0;s.locations[p.id]??=p.city;if(s.relations[p.id]>0&&!s.known.includes(p.id))s.known.push(p.id);}
@@ -44,6 +77,8 @@ P.personAge=function(p){return p.age+Math.floor((this.s.day-(p.sinceDay||1))/360
 P.ageNow=function(){return this.s.age+Math.floor((this.s.day-this.s.ageAtDay)/360);};
 P.ready=function(){return base.ready.call(this)&&!this.s.journey&&this.s.alive;};
 P.free=function(){return !!this.s?.started&&!this.s.pending&&!this.s.journey&&this.s.alive;};
+P.achievementList=function(){const unlocked=this.s?.achievementBook?.unlocked||{};return ACHIEVEMENTS.map(a=>({id:a.id,category:a.category,icon:a.icon,name:a.name,desc:a.desc,goal:a.goal,progress:Math.max(0,Math.min(a.goal,Math.floor(a.measure(this)||0))),unlocked:!!unlocked[a.id],record:unlocked[a.id]||null}));};
+P.checkAchievements=function(){const book=this.s?.achievementBook;if(!book||!this.s.started)return [];const newly=[];for(const a of ACHIEVEMENTS)if(!book.unlocked[a.id]&&a.measure(this)>=a.goal){const record={day:this.s.day,actor:this.s.name,generation:this.s.generation,age:this.ageNow()};book.unlocked[a.id]=record;newly.push({...a,record});}return newly;};
 P.act=function(route){if(this.ready())this.s.lastResult=null;return base.act.call(this,route);};
 P.useMedicine=function(){return this.free()&&base.useMedicine.call(this);};
 P.apply=function(e){base.apply.call(this,e);if(this.s?.known)for(const key of Object.keys(e||{}))if(key.startsWith('relations.')){const id=key.split('.')[1];if(this.person(id)&&!this.s.known.includes(id))this.s.known.push(id);}};
@@ -245,11 +280,17 @@ P.tick=function(allowEvent=true){
   const node={id:'child'+s.family.members.length,name:actual,gender:this.random(['男','女']),birthDay:s.day,role:parent?.role==='concubine'?'庶出':'嫡出',lineage:parent?.role==='concubine'?'庶':'嫡',fatherId:owner?.gender==='男'?pregnancy.ownerId:parent?.id,motherId:owner?.gender==='女'?pregnancy.ownerId:parent?.id,generation:(owner?.generation||s.generation)+1,education:{},genes:cp(s.stats)};s.family.members.push(node);s.family.pregnancies=s.family.pregnancies.filter(p=>p!==pregnancy);this.log('家有新丁',`${parent?.name||owner?.name}一房添了${node.gender==='男'?'男孩':'女孩'}，取名${actual}，记为${node.lineage}出。`);}
  if(s.day%7===0&&!s.pending&&!s.journey&&s.assets.length&&s.day-s.estateDay>=7){const a=this.random(s.assets),policy=this.w.assetPolicies.find(p=>p.id===a.policy);if(this.rng()<.22*policy.risk*(1-a.security*.18)){s.estateDay=s.day;this.openIncident('estate',this.random(['estate-tax','estate-rival','estate-protection','estate-audit']),{key:a.key});}}
  if(s.routes.official>=25)s.identities.office=Math.max(s.identities.office,Math.min(4,Math.floor(s.routes.official/25)));if(s.routes.martial>=25&&!s.identities.sectLeader)s.identities.sect=Math.max(s.identities.sect,Math.min(4,Math.floor(s.routes.martial/25)));
- this.rescue();const lifespan=55+Math.floor(s.stats.constitution/6)+Math.floor(s.stats.luck/20);if(this.ageNow()>=lifespan){s.alive=false;s.health=0;const actor=s.family.members.find(n=>n.id===s.actorId);if(actor)actor.deathDay=s.day;s.pending=null;s.incident=null;s.journey=null;this.log('一生落幕',`${s.name}享年${this.ageNow()}岁。家业留在族谱中，可由成年子女接续。`);}
+ this.rescue();const lifespan=Math.min(105,70+Math.floor(s.stats.constitution/4)+Math.floor(s.stats.luck/6));if(this.ageNow()>=lifespan){s.alive=false;s.health=0;const actor=s.family.members.find(n=>n.id===s.actorId);if(actor)actor.deathDay=s.day;s.pending=null;s.incident=null;s.journey=null;this.log('一生落幕',`${s.name}享年${this.ageNow()}岁。家业留在族谱中，可由成年子女接续。`);}
  if(!s.alive||s.pending)return;const due=s.due.find(d=>d.day<=s.day&&!s.seen[d.id]);if(due){s.due=s.due.filter(d=>d!==due);this.open(due.id);}else if(allowEvent&&!s.journey&&this.rng()<.25)this.dispatch();
 };
 P.endDay=function(){if(!this.free())return false;this.tick();return true;};
 P.rescue=function(){if(this.s.health<=0&&this.s.alive){this.s.health=35;this.s.silver=Math.floor(this.s.silver*.6);this.log('险死还生','医馆救治后健康恢复35，现银减少四成。');}};
+const track=(name,success,record)=>{const original=P[name];if(typeof original!=='function')return;P[name]=function(...args){const result=original.apply(this,args);if(success(result)&&this.s?.achievementBook)record.call(this,result,args);return result;};};
+track('choose',result=>!!result?.ok,function(){this.s.achievementBook.stats.choices++;});
+track('practice',Boolean,function(){this.s.achievementBook.stats.practiceSessions++;});
+track('retreat',Boolean,function(){this.s.achievementBook.stats.practiceSessions++;});
+track('trade',Boolean,function(){const stats=this.s.achievementBook.stats,row=this.s.tradeLedger[0];stats.tradeDeals++;if(row?.profit>0)stats.tradeProfit+=row.profit;});
+const arrive=P.arrive;P.arrive=function(...args){arrive.apply(this,args);const stats=this.s?.achievementBook?.stats;if(stats?.visitedCities&&!stats.visitedCities.includes(this.s.city))stats.visitedCities.push(this.s.city);};
 }
 if(typeof module!=='undefined'&&module.exports)module.exports=install;else install(root.ShanheEngine.Game);
 })(typeof window!=='undefined'?window:globalThis);
