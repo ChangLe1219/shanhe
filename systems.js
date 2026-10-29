@@ -36,7 +36,7 @@ const ACHIEVEMENTS=[
  {id:'notorious',category:'江湖人生',icon:'影',name:'恶名远扬',desc:'恶名积累至八十。',goal:80,measure:g=>g.s.heat}
 ];
 P.setupSystems=function(){
- const s=this.s;s.systemsVersion=4;s.known??=[];s.locations??={};s.letters??=[];s.markets??={};s.basis??={};s.tradeLedger??=[];s.journey??=null;s.incident??=null;s.travelHistory??=[];s.estateLedger??=[];s.estateDay??=0;s.ageAtDay??=1;s.generation??=1;s.actorId??='founder';s.alive??=true;s.legacy??={};s.identities??={office:0,sect:0,sectLeader:false};s.peopleExtra??=[];
+ const s=this.s;s.systemsVersion=5;s.known??=[];s.locations??={};s.letters??=[];s.markets??={};s.basis??={};s.tradeLedger??=[];s.journey??=null;s.incident??=null;s.travelHistory??=[];s.estateLedger??=[];s.estateDay??=0;s.ageAtDay??=1;s.generation??=1;s.actorId??='founder';s.alive??=true;s.legacy??={};s.identities??={office:0,sect:0,sectLeader:false};s.peopleExtra??=[];s.meetCooldown??={};s.brothelVisits??=0;s.redeemedCodes??=[];
  s.family??={home:null,members:[],pregnancies:[],heir:null,history:[],fertility:true};
  s.achievementBook??={unlocked:{},stats:{}};if(!s.achievementBook||typeof s.achievementBook!=='object'||Array.isArray(s.achievementBook))s.achievementBook={unlocked:{},stats:{}};if(!s.achievementBook.unlocked||typeof s.achievementBook.unlocked!=='object'||Array.isArray(s.achievementBook.unlocked))s.achievementBook.unlocked={};if(!s.achievementBook.stats||typeof s.achievementBook.stats!=='object'||Array.isArray(s.achievementBook.stats))s.achievementBook.stats={};const tradeProfit=(s.tradeLedger||[]).reduce((n,x)=>n+Math.max(0,x.profit||0),0);for(const [key,value]of Object.entries({choices:Object.keys(s.seen||{}).length,practiceSessions:0,tradeDeals:(s.tradeLedger||[]).length,tradeProfit}))if(!Number.isFinite(s.achievementBook.stats[key])||s.achievementBook.stats[key]<0)s.achievementBook.stats[key]=value;const hadVisited=Array.isArray(s.achievementBook.stats.visitedCities),visited=hadVisited?s.achievementBook.stats.visitedCities.filter(id=>this.w.cities.some(c=>c.id===id)):[s.city,...(s.travelHistory||[]).map(x=>x.to)].filter(id=>this.w.cities.some(c=>c.id===id));s.achievementBook.stats.visitedCities=[...new Set(visited)];
  if(!s.family.members.some(n=>n.id===s.actorId))s.family.members.push({id:s.actorId,name:s.name,gender:s.gender,birthDay:s.ageAtDay-s.age*360,role:'家主',generation:s.generation});
@@ -53,7 +53,7 @@ P.load=function(input){
  base.load.call(this,s);this.setupSystems();
  const a=this.s,err=msg=>{throw Error('扩展存档无效：'+msg);};
  const scan=x=>{if(!x||typeof x!=='object')return;for(const [k,v]of Object.entries(x)){if(['__proto__','constructor','prototype'].includes(k))err('非法字段');scan(v);}};scan(a);
- if(!Array.isArray(a.known)||!Array.isArray(a.peopleExtra)||!Array.isArray(a.letters)||!Array.isArray(a.tradeLedger)||!Array.isArray(a.estateLedger)||!Array.isArray(a.family.members)||!Array.isArray(a.family.pregnancies))err('集合结构');
+ if(!Array.isArray(a.known)||!Array.isArray(a.peopleExtra)||!Array.isArray(a.letters)||!Array.isArray(a.tradeLedger)||!Array.isArray(a.estateLedger)||!Array.isArray(a.family.members)||!Array.isArray(a.family.pregnancies)||!Array.isArray(a.redeemedCodes)||a.redeemedCodes.some(x=>typeof x!=='string'||!x||x.length>40)||new Set(a.redeemedCodes).size!==a.redeemedCodes.length||!a.meetCooldown||typeof a.meetCooldown!=='object'||Array.isArray(a.meetCooldown)||Object.entries(a.meetCooldown).some(([id,day])=>!this.w.cities.some(c=>c.id===id)||!Number.isFinite(day)||day<0)||!Number.isInteger(a.brothelVisits)||a.brothelVisits<0)err('集合结构');
  for(const [city,goods]of Object.entries(a.markets)){if(!this.w.cities.some(c=>c.id===city))err('货市城市');for(const v of Object.values(goods))if(!Number.isFinite(v.stock)||v.stock<0||!Number.isFinite(v.base)||v.base<=0)err('货市数值');}
  if(a.journey){const j=a.journey;if(!Array.isArray(j.path)||j.path.some(id=>!this.w.cities.some(c=>c.id===id))||!this.w.escorts.some(e=>e.id===j.escort)||['remaining','value','fee','elapsed','total','distance','compensated','danger'].some(k=>!Number.isFinite(j[k])||j[k]<0)||!Array.isArray(j.logs)||j.logs.some(l=>typeof l!=='string'))err('行旅');if(j.unitValues&&Object.values(j.unitValues).some(v=>!Number.isFinite(v)||v<0))err('保价');}
  if(a.incident&&(!['road','estate','family'].includes(a.incident.type)||!this.events.some(e=>e.id===a.incident.eventId)))err('待决风波');
@@ -94,14 +94,17 @@ P.priceAt=function(id,city=this.s.city,buy=true){
 };
 P.price=function(id,buy=true){return this.priceAt(id,this.s.city,buy);};
 P.trade=function(id,qty,buy){
- const g=this.w.goods.find(g=>g.id===id);if(!this.ready()||!g||!Number.isInteger(qty)||qty<1||qty>999)return false;
+ const g=this.w.goods.find(g=>g.id===id);if(!this.free()||!g||!Number.isInteger(qty)||qty<1||qty>999)return false;
  const unit=this.price(id,buy),sum=unit*qty,have=this.s.inventory[id]||0,m=this.marketEntry(this.s.city,id);
  if(buy&&(this.s.silver<sum||this.cargo()+qty>this.capacity()||m.stock<qty)||!buy&&have<qty)return false;
  let b=this.s.basis[id]??={qty:have,value:0},cost=0;if(buy){b.qty+=qty;b.value+=sum;}else{cost=Math.round(b.qty?b.value*Math.min(qty,b.qty)/b.qty:0);b.value=Math.max(0,b.value-cost);b.qty=Math.max(0,b.qty-qty);}
- this.s.energy--;m.stock+=buy?-qty:qty;this.apply({silver:buy?-sum:sum,['inventory.'+id]:buy?qty:-qty,'routes.trade':2});
+ m.stock+=buy?-qty:qty;this.apply({silver:buy?-sum:sum,['inventory.'+id]:buy?qty:-qty,'routes.trade':2});
  const row={day:this.s.day,city:this.s.city,good:id,qty,buy,total:sum,cost,profit:buy?null:sum-cost};this.s.tradeLedger.unshift(row);this.s.tradeLedger=this.s.tradeLedger.slice(0,80);
  return this.result(buy?'购货入仓':'售货结账',`${this.city().name}：${g.name} ${qty}${g.unit}，${buy?'支出':'收得'} ${sum}两。${buy?'已记入成本账。':`货物账面毛利 ${sum-cost}两，尚需扣除行旅与护航开支。`}`);
 };
+P.maxBuyQuantity=function(id){const p=this.price(id),free=Math.max(0,this.capacity()-this.cargo());return Math.max(0,Math.min(this.stock(id),free,Math.floor(this.s.silver/Math.max(1,p))));};
+P.buyAll=function(id){const qty=Math.min(this.stock(id),Math.max(0,this.capacity()-this.cargo()));if(!qty||this.s.silver<this.price(id)*qty)return false;return this.trade(id,qty,true);};
+P.sellAll=function(id){const qty=this.s.inventory[id]||0;return qty>0&&this.trade(id,qty,false);};
 P.pathTo=function(target){
  const cities=this.w.cities,dist=Object.fromEntries(cities.map(c=>[c.id,Infinity])),prev={};dist[this.s.city]=0;const left=new Set(cities.map(c=>c.id));
  while(left.size){let id=[...left].sort((a,b)=>dist[a]-dist[b])[0];left.delete(id);if(id===target)break;const a=cities.find(c=>c.id===id);for(const link of a.links){const b=cities.find(c=>c.id===link);const days=Math.max(1,Math.round(Math.hypot(a.x-b.x,a.y-b.y)/13))+(Math.max(a.danger,b.danger)>=3?1:0);if(dist[id]+days<dist[link]){dist[link]=dist[id]+days;prev[link]=id;}}}
@@ -188,7 +191,7 @@ P.choose=function(index){
  this.rescue();return {ok:true,...this.s.lastResult};
 };
 P.initAsset=function(a){a.key=a.city+'_'+a.id;a.policy??='steady';a.security??=0;a.reputation??=50;a.disrupted??=0;a.weekReady??=true;a.materials??={};a.products??={};const b=this.w.buildings.find(b=>b.id===a.id);for(const [id,n]of Object.entries(b?.materials||{}))a.materials[id]??=n*a.level*2;return a;};
-P.build=function(id){const ok=base.build.call(this,id);if(ok){this.s.flags.owns_assets=true;const a=this.s.assets.find(a=>a.id===id&&a.city===this.s.city);this.initAsset(a);this.result('置办家业',`${this.city().name}的${this.w.buildings.find(b=>b.id===id).name}已置办或扩建。初始附两轮原料，可在运营页补货、调整经营方针与护院。`);}return ok;};
+P.build=function(id){const b=this.w.buildings.find(x=>x.id===id);if(!this.free()||!b)return false;let a=this.s.assets.find(x=>x.id===id&&x.city===this.s.city);const cost=Math.round(b.cost*(1+(a?.level||0)*.7));if(this.s.silver<cost||(a?.level||0)>=5)return false;this.s.silver-=cost;if(a)a.level++;else this.s.assets.push(a={id,city:this.s.city,level:1});this.initAsset(a);this.s.flags.owns_assets=true;this.apply({'routes.trade':2});this.result('置办家业',`${this.city().name}的${b.name}升至${a.level}级，花费${cost}两。置业不占日常行动；初始附两轮原料，可在运营页补货、调整经营方针与护院。`);return true;};
 P.assetOperation=function(key,operation,value){
  const a=this.s.assets.find(a=>a.key===key),b=this.w.buildings.find(b=>b.id===a?.id);if(!a||!this.ready())return false;
  if(operation==='policy'){if(!this.w.assetPolicies.some(p=>p.id===value))return false;a.policy=value;}
@@ -220,23 +223,51 @@ P.visit=function(id,mode='talk'){
  if(mode==='ask'){const city=this.w.cities.find(c=>c.id===this.personCity(id)),good=this.w.goods.find(g=>city.shortages.includes(g.id));this.apply({'stats.insight':1});return this.result('托问近况',`${p.name}说：${city.name}${good?'近来缺'+good.name:'货价尚平'}。所处势力愿意承接合规往来，你们的交情也更近一些。`);}
  return this.result(local?(known?'登门叙话':'初次结识'):'书信拜访',`${local?'你与':'你寄信给远在'+this.w.cities.find(c=>c.id===this.personCity(id)).name+'的'}${p.name}，好感增加 ${gain}。${mode==='gift'?'薄礼附着一份心意。':''}${!local?'约两日后会有回信。':p.text}`);
 };
+P.socialGathering=function(){
+ const s=this.s,city=s.city,last=s.meetCooldown[city]||0;if(!this.free()||s.silver<8||last>0&&s.day-last<14)return false;
+ const surnames=['顾','宁','宋','陶','程','乔','林','沈','叶','谢','周','陆','许','秦','唐','温'],given=['照溪','知远','明秋','听雨','惜年','归宁','怀瑾','见川','望舒','清晏','书意','云归','晚棠','青禾','砚秋','南枝'];
+ const used=new Set(this.people().map(p=>p.name));let made=[];const genders=s.gender==='男'?['女','女','男']:['男','男','女'];
+ for(let i=0;i<genders.length;i++){let name;for(let tries=0;tries<30;tries++){name=this.random(surnames)+this.random(given);if(!used.has(name))break;}used.add(name);const id='meet'+s.day+'_'+(s.peopleExtra.length+i),social=1+Math.floor(this.rng()*3),faction=this.random(this.w.factions.filter(f=>['guild','academy','healers','escort','canal','smith'].includes(f.id))).id,p={id,name,gender:genders[i],age:20+Math.floor(this.rng()*11),sinceDay:s.day,social,city,faction,role:this.random(['茶社来客','书画雅集新友','行旅商客','曲社听众','地方文会宾客']),clan:name[0]+'氏',acceptsConcubine:social<=2,text:this.random(['借一盏茶说起一路见闻，话音轻，却很认真。','谈到家乡的河与市集，眉眼里有未走完的远路。','记得每个人的名字，也愿意听人把话讲完。','正打算在此地多住些时日，看看能否遇见志同道合的人。'])};s.peopleExtra.push(p);s.relations[id]=0;s.locations[id]=city;made.push(p);}
+ s.silver-=8;s.meetCooldown[city]=s.day;return this.result('雅集识新友',`花去茶资8两，在${this.city().name}的雅集认识了几位新面孔：${made.map(p=>`${p.name}（${p.gender}，${p.age}岁）`).join('、')}。人物已记入本城名录；登门叙话后才会成为熟人。雅集两周可再访一次，不消耗行动。`);
+};
+P.brothelAction=function(kind){
+ const s=this.s;if((kind==='network'?!this.ready():!this.free())||this.ageNow()<18||!['listen','poem','network'].includes(kind))return false;
+ if(kind==='listen'){const cost=8;if(s.silver<cost)return false;s.silver-=cost;this.apply({health:4,'stats.charm':1});s.brothelVisits++;return this.result('红袖坊 · 琵琶声里',this.random(['帘外雨声渐密，曲中人唱的是客子归乡。你听完一阕，心绪稍定，交际与健康各有小益。','一曲《折柳》唱到末句，满堂都静了片刻。你留下茶钱，也把疲惫放下些许。','席间说书人讲到商队过关，几句细节竟与你的行旅颇有相通。你记下这段见闻，养回几分精神。'])+'花费8两，不消耗行动。');}
+ if(kind==='poem'){const cost=12;if(s.silver<cost)return false;s.silver-=cost;const gain=2+Math.floor(this.rng()*3);this.apply({'stats.learning':1,'stats.charm':1,'routes.scholar':1});s.brothelVisits++;return this.result('红袖坊 · 诗笺酬答',`你以一首短诗换来一段新曲。掌柜把客人遗落的诗稿也借你一观，学识与交际略有长进。花费${cost}两，不消耗行动。`);}
+ const cost=24;if(s.silver<cost)return false;const old=this.people().filter(p=>p.gender!==s.gender&&this.personAge(p)>=18&&!s.known.includes(p.id)&&!p.married&&this.personCity(p.id)===s.city);let p=old.length?this.random(old):null;
+ if(!p){const surname=this.random(['顾','宁','宋','陶','程','乔','林','沈','叶','谢']),given=this.random(['照溪','知远','明秋','听雨','惜年','归宁','怀瑾','见川','望舒','清晏','书意','晚棠']);p={id:'salon'+s.day+'_'+(s.peopleExtra.length+1),name:surname+given,gender:s.gender==='男'?'女':'男',age:21+Math.floor(this.rng()*9),sinceDay:s.day,social:2,city:s.city,faction:this.random(this.w.factions.filter(f=>['guild','academy','healers','escort'].includes(f.id))).id,role:'红袖坊常客 / 艺人',clan:surname+'氏',acceptsConcubine:true,text:'不愿被旁人的传闻定义，谈起自己的行当时倒有说不完的细节。'};s.peopleExtra.push(p);s.locations[p.id]=s.city;s.relations[p.id]=0;}
+ s.silver-=cost;s.energy--;s.brothelVisits++;if(!s.known.includes(p.id))s.known.push(p.id);this.apply({['relations.'+p.id]:10,'stats.charm':1});return this.result('红袖坊 · 引见新识',`掌柜为你引见了${p.name}。你们谈曲艺、行旅与各自的打算，彼此留下名帖；可在人脉簿继续拜访。花费${cost}两并消耗1行动。这里提供成年人的社交、曲艺与茶酒互动，不描写露骨内容。`);
+};
+P.redeemCode=function(code,entries){
+ const s=this.s,name=String(code||'').trim();if(!this.free()||!name||name.length>40||s.redeemedCodes.includes(name)||!Array.isArray(entries)||!entries.length)return false;
+ const allowed=new Set(['silver','health','renown','morality','heat','energy']);for(const r of this.w.routes)allowed.add('routes.'+r.id);for(const k in this.w.stats)allowed.add('stats.'+k);for(const k of this.w.skills)allowed.add('skills.'+k.id);for(const k of this.w.goods)allowed.add('inventory.'+k.id);for(const p of this.people())allowed.add('relations.'+p.id);for(const f of this.w.factions)allowed.add('factions.'+f.id);
+ if(entries.some(x=>!Array.isArray(x)||!allowed.has(x[0])||!Number.isInteger(x[1])||x[1]<=0||x[1]>1000000))return false;
+ for(const [key,value]of entries){if(key==='energy')s.energy=Math.min(3,s.energy+value);else this.apply({[key]:value});}s.redeemedCodes.push(name);this.result('兑换成功 · '+name,`已按兑换码增加${entries.map(([k,v])=>`${k} +${v}`).join('、')}。每个兑换码在当前存档中仅能使用一次。`);return true;
+};
 P.household=function(){return this.s.family.members.filter(n=>!n.deathDay&&n.ownerId===this.s.actorId&&['wife','husband','concubine'].includes(n.role));};
 P.children=function(){return this.s.family.members.filter(n=>n.fatherId===this.s.actorId||n.motherId===this.s.actorId);};
 P.homeCost=function(){return Math.ceil(120*Math.pow((this.s.family.home?.level||0)+1,1.45));};
 P.buildHome=function(){const cost=this.homeCost();if(!this.ready()||this.s.silver<cost)return false;this.s.silver-=cost;this.s.energy--;if(!this.s.family.home)this.s.family.home={city:this.s.city,level:1};else this.s.family.home.level++;return this.result('安家置宅',`宅邸设在${this.w.cities.find(c=>c.id===this.s.family.home.city).name}，扩至 ${this.s.family.home.level}进院落。家眷可在此安居，每进可容纳三位配偶；子女另计。`);};
 P.marriageReason=function(id,role='wife'){
  const p=this.person(id),s=this.s;if(!p)return '尚未相识';if(!s.known.includes(id))return '先结识对方';if(!this.free())return '先处理当前事务或抵达城镇';if(p.gender===s.gender)return '此处列出异性婚配';if(this.personAge(p)<18)return '尚未成年';if(p.married||s.family.members.some(n=>n.pid===id))return '已有婚约或已入族谱';if(!s.family.home)return '先安家置宅';
- if(role==='concubine'){if(s.gender!=='男')return '女角色采用一夫婚配';if(!this.household().some(n=>n.role==='wife'))return '先迎娶正妻';if(p.social>2)return '身份不适合纳为妾室';if(!p.acceptsConcubine)return '对方只愿正式结亲';if(s.relations[id]<45)return '纳妾需好感至少45';}else{if(this.household().some(n=>['wife','husband'].includes(n.role)))return '已有正配';if(s.relations[id]<100)return '正配需好感满100';}
+ if(role==='concubine'){if(!this.household().some(n=>['wife','husband'].includes(n.role)))return '先结为正配';if(p.social>2)return '身份不适合以侧室身份入家';if(!p.acceptsConcubine)return '对方只愿正式结亲';if(s.relations[id]<45)return '侧室需好感至少45';}else{if(this.household().some(n=>['wife','husband'].includes(n.role)))return '已有正配';if(s.relations[id]<100)return '正配需好感满100';}
  if(this.household().length>=s.family.home.level*3)return '需扩建宅邸';const fee=role==='concubine'?100:180;if(s.silver<fee)return '婚礼与安家费用不足'+fee+'两';if(s.energy<1)return '今日行动不足';return '';
 };
 P.marry=function(id,role='wife'){
  if(!['wife','concubine'].includes(role))return false;
  if(this.marriageReason(id,role))return false;const p=this.person(id),fee=role==='concubine'?100:180;this.s.silver-=fee;this.s.energy--;const actual=role==='concubine'?'concubine':this.s.gender==='男'?'wife':'husband';
- const node={id:'spouse'+this.s.family.members.length,pid:id,name:p.name,gender:p.gender,birthDay:this.s.day-this.personAge(p)*360,role:actual,ownerId:this.s.actorId,generation:this.s.generation,joined:this.s.day,nextPregnancy:this.s.day+30};this.s.family.members.push(node);this.s.locations[id]=this.s.family.home.city;
+ const node={id:'spouse'+this.s.family.members.length,pid:id,name:p.name,gender:p.gender,birthDay:this.s.day-this.personAge(p)*360,role:actual,ownerId:this.s.actorId,generation:this.s.generation,joined:this.s.day,nextPregnancy:this.s.day+30,effortDay:this.s.day,effortCount:0};this.s.family.members.push(node);this.s.locations[id]=this.s.family.home.city;
  this.apply({['factions.'+p.faction]:4,renown:2,'flags.household':true});this.result('红笺入户',`${p.name}与你议定婚事，${actual==='concubine'?'以侧室之礼入家':'结为正配'}。亲族从此有了新的往来，家用也会增加。`);
  this.openIncident('family','family-clan',{personId:id});return true;
 };
 P.familyTime=function(){if(!this.ready()||!this.s.family.home||this.s.city!==this.s.family.home.city)return false;this.s.energy--;for(const n of this.household())this.apply({['relations.'+n.pid]:4});this.apply({health:10});return this.result('一院灯火','你留出半日与家人吃饭、叙话。家眷好感各增4，健康恢复10。');};
+P.familyEffort=function(id){
+ const n=this.household().find(x=>x.id===id),s=this.s;if(!n||!this.free()||!s.family.home||s.city!==s.family.home.city||!s.family.fertility||s.family.pregnancies.some(x=>x.parentId===n.id))return false;
+ if(n.effortDay!==s.day){n.effortDay=s.day;n.effortCount=0;}const count=n.effortCount||0,spouseAge=Math.floor((s.day-n.birthDay)/360),age=this.ageNow(),eligible=age>=18&&age<=65&&spouseAge>=18&&(s.gender==='男'?spouseAge<=43:age<=43)&&s.health>=30;
+ if(!eligible)return false;if(count>=2&&s.energy<1)return false;if(count>=2)s.energy--;n.effortCount=count+1;
+ const pregnant=this.rng()<.12;if(pregnant){s.family.pregnancies.push({parentId:n.id,ownerId:s.actorId,due:s.day+270});n.nextPregnancy=s.day+630;}
+ return this.result('相伴努力 · '+n.name,`今日第${n.effortCount}次相伴${n.effortCount===3?'（消耗1行动）':'（不消耗行动）'}。每次主动努力有12%受孕机会；自然受孕为符合条件时每月24%。${pregnant?'传来有孕喜讯，预计九个月后添丁。':s.family.pregnancies.some(x=>x.parentId===n.id)?'已有身孕，安心静候即可。':'此番未有喜讯，仍可在今日继续相伴。'}`);
+};
 P.educate=function(id,route){const n=this.children().find(n=>n.id===id);if(!n||!this.ready()||(this.s.day-n.birthDay)/360<3||this.s.day-(n.lastEducation||-100)<10||!this.w.routes.some(r=>r.id===route)||this.s.silver<12)return false;this.s.silver-=12;this.s.energy--;n.lastEducation=this.s.day;n.education??={};n.education[route]=Math.min(100,(n.education[route]||0)+5);return this.result('家学有继',`${n.name}修习${this.w.routes.find(r=>r.id===route).name}家学，积累5点传习。子女成年传家后化为初始本领与成长助力。`);};
 P.designateHeir=function(id){const n=this.children().find(n=>n.id===id);if(!n||!this.free())return false;this.s.family.heir=id;return this.result('立下传家约',`你指定${n.name}为传人。现在可先培养，满18岁后可正式传家；若家主寿尽，也会按约安排。`);};
 P.succeed=function(id=this.s.family.heir){
@@ -265,9 +296,9 @@ P.tick=function(allowEvent=true){
   if(b.product&&s.day%7===0){a.products[b.product]=Math.min(200,(a.products[b.product]||0)+a.level*2);production+=a.level*2;}
   if(policy.id==='benevolent'&&s.day%7===0)s.renown++;
  }
- const livingMembers=s.family.members.filter(n=>!n.deathDay&&n.id!==s.actorId),familyFee=livingMembers.filter(n=>['wife','husband','concubine'].includes(n.role)).length*2+livingMembers.filter(n=>(s.day-n.birthDay)/360<18).length+livingMembers.filter(n=>n.role==='退居长辈').length+(s.family.home?.level||0),living=5+familyFee;
- const healthy=s.silver+income>=expenses+living;this.apply({silver:income-expenses-living,health:healthy?3:-4,heat:-2});
- s.estateLedger.unshift({day:s.day,income,expenses,living,production});s.estateLedger=s.estateLedger.slice(0,45);
+ const livingMembers=s.family.members.filter(n=>!n.deathDay&&n.id!==s.actorId),familyFee=livingMembers.filter(n=>['wife','husband','concubine'].includes(n.role)).length+Math.ceil(livingMembers.filter(n=>(s.day-n.birthDay)/360<18).length*.5)+livingMembers.filter(n=>n.role==='退居长辈').length, living=3+familyFee+Math.max(0,(s.family.home?.level||0)-1);
+ const stipend=(s.identities.office||0)*3,healthy=s.silver+income+stipend>=expenses+living;this.apply({silver:income+stipend-expenses-living,health:healthy?3:-4,heat:-2});
+ s.estateLedger.unshift({day:s.day,income,stipend,expenses,living,production});s.estateLedger=s.estateLedger.slice(0,45);
  if(s.heat>=45&&s.day%3===0){this.apply({silver:-15});this.log('风声渐紧','盘查多付15两打点费。');}
  for(const l of s.letters.filter(l=>l.day<=s.day)){const p=this.person(l.to);this.apply({['relations.'+l.to]:1});this.log('远方回信',`${p?.name||'故人'}从${this.w.cities.find(c=>c.id===this.personCity(l.to))?.name}回信，问候了近况。`);}s.letters=s.letters.filter(l=>l.day>s.day);
  for(const n of s.family.members)if(n.pid&&!n.deathDay&&(s.day-n.birthDay)/360>=76){n.deathDay=s.day;s.family.pregnancies=s.family.pregnancies.filter(p=>p.parentId!==n.id);this.log('家中讣告',`${n.name}寿终，姓名与一生留在族谱中。`);}
