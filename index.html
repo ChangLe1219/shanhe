@@ -5,10 +5,11 @@
 <meta name="description" content="一款可扩写的 H5 文字经营游戏。随机出身，在武道、行商、官路、绿林、学问与医道之间，写出你的江湖。">
 <title>山河局 · 万象江湖</title>
 <link rel="stylesheet" href="style.css">
-<script src="content/world.js" defer></script><script src="content/encounters.js" defer></script><script src="content/chapters.js" defer></script><script src="engine.js" defer></script><script src="game.js" defer></script>
+<link rel="stylesheet" href="expansion.css">
+<script src="content/world.js" defer></script><script src="content/expansion-world.js" defer></script><script src="content/encounters.js" defer></script><script src="content/chapters.js" defer></script><script src="content/expansion-events.js" defer></script><script src="content/life-events.js" defer></script><script src="engine.js" defer></script><script src="systems.js" defer></script><script src="ui-expansion.js" defer></script><script src="game.js" defer></script>
 </head>
 <body>
-<header class="topbar"><a class="brand" href="./"><span class="brand-seal">山<br>河</span><span>山河局<small>万象江湖 · 文字经营</small></span></a><span class="edition">卷一 / 河山初定</span><div class="top-actions"><span id="save-status" class="save-status">本地自动存档</span><button data-do="save-menu" class="quiet">存档管理 <span>↗</span></button></div></header>
+<header class="topbar"><a class="brand" href="./"><span class="brand-seal">山<br>河</span><span>山河局<small>万象江湖 · 文字经营</small></span></a><span class="edition">卷二 / 商路与家业</span><div class="top-actions"><span id="save-status" class="save-status">本地自动存档</span><button data-do="save-menu" class="quiet">存档管理 <span>↗</span></button></div></header>
 <main id="app"></main>
 <footer class="footer"><span>山河之间，来往皆有回响。</span><span>独立存档 · 数据驱动 · 可自由扩写</span></footer>
 <dialog id="modal"><div class="dialog-top"><span id="modal-title">江湖手札</span><button data-do="close-modal" class="quiet" aria-label="关闭对话框">关闭 ×</button></div><div id="modal-body"></div></dialog>

@@ -1,0 +1,354 @@
+{
+  "format": "shanhe-save",
+  "state": {
+    "version": 2,
+    "started": true,
+    "name": "顾行舟",
+    "gender": "男",
+    "age": 20,
+    "origin": "herbal",
+    "talent": "铁算盘",
+    "stats": {
+      "martial": 38,
+      "business": 48,
+      "learning": 46,
+      "strategy": 38,
+      "charm": 38,
+      "insight": 52,
+      "constitution": 38,
+      "luck": 38
+    },
+    "day": 6481,
+    "energy": 3,
+    "silver": 1800,
+    "health": 100,
+    "renown": 25,
+    "heat": 0,
+    "morality": 2,
+    "city": "heyang",
+    "routes": {
+      "martial": 24,
+      "trade": 48,
+      "official": 32,
+      "outlaw": 12,
+      "scholar": 20,
+      "medicine": 16
+    },
+    "factions": {
+      "court": 0,
+      "censor": 0,
+      "guild": 4,
+      "canal": 0,
+      "sword": 0,
+      "escort": 0,
+      "blackflag": 0,
+      "shadow": 0,
+      "academy": 0,
+      "healers": 4,
+      "army": 0,
+      "smith": 0
+    },
+    "relations": {
+      "shen": 55,
+      "tang": 55,
+      "du": 0,
+      "lin": 55,
+      "yan": 0,
+      "xu": 0,
+      "luo": 0,
+      "qi": 0,
+      "wen": 55,
+      "meng": 0,
+      "he": 0,
+      "shi": 0,
+      "zhou": 0,
+      "bai": 0,
+      "ahe": 0,
+      "su": 0,
+      "pei": 0,
+      "zhao": 0,
+      "ning": 100,
+      "qiao": 60,
+      "xie": 0,
+      "song": 0,
+      "cheng": 0,
+      "mu": 0,
+      "lu": 0,
+      "ji": 0,
+      "yuan": 0,
+      "tao": 0,
+      "jiang": 0,
+      "ye": 0
+    },
+    "skills": {
+      "sword": 0,
+      "breath": 0,
+      "account": 0,
+      "law": 0,
+      "shadow": 0,
+      "classics": 0,
+      "pulse": 0
+    },
+    "inventory": {
+      "cloth": 12,
+      "porcelain": 5,
+      "tea": 3,
+      "medicine": 2
+    },
+    "assets": [
+      {
+        "id": "shop",
+        "city": "heyang",
+        "level": 2,
+        "key": "heyang_shop",
+        "policy": "steady",
+        "security": 0,
+        "reputation": 50,
+        "disrupted": 0,
+        "weekReady": true,
+        "materials": {},
+        "products": {}
+      },
+      {
+        "id": "loom",
+        "city": "heyang",
+        "level": 1,
+        "key": "heyang_loom",
+        "policy": "steady",
+        "security": 0,
+        "reputation": 50,
+        "disrupted": 0,
+        "weekReady": true,
+        "materials": {
+          "grain": 2
+        },
+        "products": {}
+      },
+      {
+        "id": "warehouse",
+        "city": "heyang",
+        "level": 1,
+        "key": "heyang_warehouse",
+        "policy": "steady",
+        "security": 0,
+        "reputation": 50,
+        "disrupted": 0,
+        "weekReady": true,
+        "materials": {},
+        "products": {}
+      }
+    ],
+    "flags": {
+      "letter_kept": true,
+      "household": true,
+      "has_children": true,
+      "owns_assets": true
+    },
+    "seen": {
+      "common-letter": 1
+    },
+    "recent": [
+      "common-letter"
+    ],
+    "due": [],
+    "pending": null,
+    "lastResult": null,
+    "log": [
+      {
+        "day": 1,
+        "title": "亲族登门",
+        "text": "你召集家人，当面把来往、分担和界线说清。亲族的帮助与责任都有了明白约定。"
+      },
+      {
+        "day": 1,
+        "title": "红笺入户",
+        "text": "乔青萝与你议定婚事，以侧室之礼入家。亲族从此有了新的往来，家用也会增加。"
+      },
+      {
+        "day": 1,
+        "title": "亲族登门",
+        "text": "你召集家人，当面把来往、分担和界线说清。亲族的帮助与责任都有了明白约定。"
+      },
+      {
+        "day": 1,
+        "title": "红笺入户",
+        "text": "宁晚晴与你议定婚事，结为正配。亲族从此有了新的往来，家用也会增加。"
+      },
+      {
+        "day": 1,
+        "title": "安家置宅",
+        "text": "宅邸设在河阳，扩至 1进院落。家眷可在此安居，每进可容纳三位配偶；子女另计。"
+      },
+      {
+        "day": 1,
+        "title": "序章 · 来自澜州的半张账",
+        "text": "收下账页，查清粮去了哪里。信使说，不必急着找谁有罪，先找粮真正到过的地方。你把半张账页压进衣襟。"
+      },
+      {
+        "day": 1,
+        "title": "命途初开",
+        "text": "顾行舟从药谷启程。出身给了你起点，往后的道路由选择写成。"
+      }
+    ],
+    "mainRoute": "trade",
+    "workDay": 0,
+    "systemsVersion": 3,
+    "known": [
+      "ning",
+      "qiao",
+      "shen",
+      "tang",
+      "wen",
+      "lin"
+    ],
+    "locations": {
+      "shen": "lanzhou",
+      "tang": "lanzhou",
+      "du": "lanzhou",
+      "lin": "linchuan",
+      "yan": "qinghe",
+      "xu": "qinghe",
+      "luo": "tieshan",
+      "qi": "yunzhou",
+      "wen": "yaogu",
+      "meng": "linchuan",
+      "he": "beiting",
+      "shi": "tieshan",
+      "zhou": "lanzhou",
+      "bai": "donghai",
+      "ahe": "heyang",
+      "su": "songshan",
+      "pei": "nanpu",
+      "zhao": "jingdu",
+      "ning": "heyang",
+      "qiao": "heyang",
+      "xie": "donghai",
+      "song": "linchuan",
+      "cheng": "yaogu",
+      "mu": "shazhou",
+      "lu": "yunzhou",
+      "ji": "jingdu",
+      "yuan": "shuofang",
+      "tao": "mingzhou",
+      "jiang": "tieshan",
+      "ye": "nanpu"
+    },
+    "letters": [],
+    "markets": {},
+    "basis": {},
+    "tradeLedger": [],
+    "journey": null,
+    "incident": null,
+    "travelHistory": [],
+    "estateLedger": [],
+    "estateDay": 0,
+    "ageAtDay": 1,
+    "generation": 1,
+    "actorId": "founder",
+    "alive": true,
+    "legacy": {},
+    "identities": {
+      "office": 1,
+      "sect": 0,
+      "sectLeader": false
+    },
+    "peopleExtra": [],
+    "family": {
+      "home": {
+        "city": "heyang",
+        "level": 1
+      },
+      "members": [
+        {
+          "id": "founder",
+          "name": "顾行舟",
+          "gender": "男",
+          "birthDay": -7199,
+          "role": "家主",
+          "generation": 1
+        },
+        {
+          "id": "spouse1",
+          "pid": "ning",
+          "name": "宁晚晴",
+          "gender": "女",
+          "birthDay": -7919,
+          "role": "wife",
+          "ownerId": "founder",
+          "generation": 1,
+          "joined": 1,
+          "nextPregnancy": 31
+        },
+        {
+          "id": "spouse2",
+          "pid": "qiao",
+          "name": "乔青萝",
+          "gender": "女",
+          "birthDay": -7559,
+          "role": "concubine",
+          "ownerId": "founder",
+          "generation": 1,
+          "joined": 1,
+          "nextPregnancy": 31
+        },
+        {
+          "id": "child3",
+          "name": "顾承宁",
+          "gender": "男",
+          "birthDay": 1,
+          "role": "嫡出",
+          "lineage": "嫡",
+          "fatherId": "founder",
+          "motherId": "spouse1",
+          "generation": 2,
+          "education": {
+            "trade": 40,
+            "official": 30
+          },
+          "genes": {
+            "martial": 38,
+            "business": 48,
+            "learning": 46,
+            "strategy": 38,
+            "charm": 38,
+            "insight": 52,
+            "constitution": 38,
+            "luck": 38
+          }
+        },
+        {
+          "id": "child4",
+          "name": "顾明舒",
+          "gender": "女",
+          "birthDay": 3961,
+          "role": "庶出",
+          "lineage": "庶",
+          "fatherId": "founder",
+          "motherId": "spouse2",
+          "generation": 2,
+          "education": {
+            "scholar": 15
+          },
+          "genes": {
+            "martial": 38,
+            "business": 48,
+            "learning": 46,
+            "strategy": 38,
+            "charm": 38,
+            "insight": 52,
+            "constitution": 38,
+            "luck": 38
+          }
+        }
+      ],
+      "pregnancies": [],
+      "heir": "child3",
+      "history": [],
+      "fertility": false
+    }
+  },
+  "content": {
+    "formatVersion": 1,
+    "events": []
+  }
+}

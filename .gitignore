@@ -2,4 +2,4 @@ dist/
 node_modules/
 *.zip
 .openai/*.local.*
-/.vs/slnx.sqlite
+/.vs/
