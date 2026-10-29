@@ -1,0 +1,9 @@
+# 山河局兑换码配置
+# 每行一个兑换码，格式：兑换码|参数=增加值|参数=增加值
+# 编辑此文本即可调整奖励；修改后将本文件与游戏一起发布。
+# 参数只能使用正整数，支持 silver、health、renown、morality、heat、energy，
+# 以及 stats.*、routes.*、skills.*、inventory.*、factions.*、relations.*。
+
+山河测试礼|silver=500|health=20
+行商测试礼|silver=1200|routes.trade=10|skills.account=15
+家业测试礼|silver=800|renown=10

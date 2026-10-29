@@ -22,7 +22,7 @@ fs.writeFileSync(path.join(__dirname,'docs','剧情文本全卷.md'),book);
 fs.writeFileSync(path.join(__dirname,'content','full-content.json'),JSON.stringify({formatVersion:1,name:'山河局·万象江湖',events},null,2));
 fs.writeFileSync(path.join(__dirname,'docs','事件索引.md'),`# 事件索引\n\n共 ${events.length} 段事件，${events.reduce((n,e)=>n+e.choices.length,0)} 个选择。\n\n| ID | 标题 | 类别 | 道路 |\n| --- | --- | --- | --- |\n`+events.map(e=>`| ${e.id} | ${e.title} | ${{story:'主线',random:'随机',followup:'余波'}[e.kind]} | ${e.routes.map(id=>w.routes.find(r=>r.id===id)?.name||'共通').join(' / ')} |`).join('\n')+'\n');
 const target=path.join(__dirname,'dist');fs.mkdirSync(target,{recursive:true});
-for(const file of ['index.html','style.css','expansion.css','game.js','engine.js','systems.js','ui-expansion.js'])fs.copyFileSync(path.join(__dirname,file),path.join(target,file));
+for(const file of ['index.html','style.css','expansion.css','game.js','engine.js','systems.js','ui-expansion.js','redeem-codes.txt'])fs.copyFileSync(path.join(__dirname,file),path.join(target,file));
 for(const dir of ['content','docs'])fs.cpSync(path.join(__dirname,dir),path.join(target,dir),{recursive:true});
 const chinese=(book.match(/[\u3400-\u9fff]/g)||[]).length;
 console.log(JSON.stringify({events:events.length,story:count('story'),random:count('random'),followup:count('followup'),choices:events.reduce((n,e)=>n+e.choices.length,0),storyChineseCharacters:chinese,output:target},null,2));

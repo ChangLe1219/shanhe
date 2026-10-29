@@ -244,6 +244,15 @@ P.redeemCode=function(code,entries){
  if(entries.some(x=>!Array.isArray(x)||!allowed.has(x[0])||!Number.isInteger(x[1])||x[1]<=0||x[1]>1000000))return false;
  for(const [key,value]of entries){if(key==='energy')s.energy=Math.min(3,s.energy+value);else this.apply({[key]:value});}s.redeemedCodes.push(name);this.result('兑换成功 · '+name,`已按兑换码增加${entries.map(([k,v])=>`${k} +${v}`).join('、')}。每个兑换码在当前存档中仅能使用一次。`);return true;
 };
+P.redeemConfiguredCode=function(code,config){
+ const name=String(code||'').trim();if(!name||typeof config!=='string')return false;
+ const matches=config.split(/\r?\n/).map(line=>line.trim()).filter(line=>line&&!line.startsWith('#')).filter(line=>line.split('|',1)[0].trim()===name);
+ if(matches.length!==1)return false;
+ const parts=matches[0].split('|');if(parts.length<2)return false;
+ const entries=[];
+ for(const part of parts.slice(1)){const i=part.indexOf('=');if(i<1)return false;const key=part.slice(0,i).trim(),raw=part.slice(i+1).trim();if(!raw||!/^\d+$/.test(raw))return false;entries.push([key,Number(raw)]);}
+ return this.redeemCode(name,entries);
+};
 P.household=function(){return this.s.family.members.filter(n=>!n.deathDay&&n.ownerId===this.s.actorId&&['wife','husband','concubine'].includes(n.role));};
 P.children=function(){return this.s.family.members.filter(n=>n.fatherId===this.s.actorId||n.motherId===this.s.actorId);};
 P.homeCost=function(){return Math.ceil(120*Math.pow((this.s.family.home?.level||0)+1,1.45));};
@@ -264,9 +273,9 @@ P.familyTime=function(){if(!this.ready()||!this.s.family.home||this.s.city!==thi
 P.familyEffort=function(id){
  const n=this.household().find(x=>x.id===id),s=this.s;if(!n||!this.free()||!s.family.home||s.city!==s.family.home.city||!s.family.fertility||s.family.pregnancies.some(x=>x.parentId===n.id))return false;
  if(n.effortDay!==s.day){n.effortDay=s.day;n.effortCount=0;}const count=n.effortCount||0,spouseAge=Math.floor((s.day-n.birthDay)/360),age=this.ageNow(),eligible=age>=18&&age<=65&&spouseAge>=18&&(s.gender==='男'?spouseAge<=43:age<=43)&&s.health>=30;
- if(!eligible)return false;if(count>=2&&s.energy<1)return false;if(count>=2)s.energy--;n.effortCount=count+1;
+ if(!eligible||count>=3)return false;if(count>=2&&s.energy<1)return false;if(count>=2)s.energy--;n.effortCount=count+1;
  const pregnant=this.rng()<.12;if(pregnant){s.family.pregnancies.push({parentId:n.id,ownerId:s.actorId,due:s.day+270});n.nextPregnancy=s.day+630;}
- return this.result('相伴努力 · '+n.name,`今日第${n.effortCount}次相伴${n.effortCount===3?'（消耗1行动）':'（不消耗行动）'}。每次主动努力有12%受孕机会；自然受孕为符合条件时每月24%。${pregnant?'传来有孕喜讯，预计九个月后添丁。':s.family.pregnancies.some(x=>x.parentId===n.id)?'已有身孕，安心静候即可。':'此番未有喜讯，仍可在今日继续相伴。'}`);
+ return this.result('造个小人 · '+n.name,`今日第${n.effortCount}次主动备孕${n.effortCount===3?'（消耗1行动）':'（不消耗行动）'}。每次有12%受孕机会；自然受孕为符合条件时每月24%。${pregnant?'传来有孕喜讯，预计九个月后添丁。':s.family.pregnancies.some(x=>x.parentId===n.id)?'已有身孕，安心静候即可。':'此番未有喜讯，仍可在今日继续尝试。'}`);
 };
 P.educate=function(id,route){const n=this.children().find(n=>n.id===id);if(!n||!this.ready()||(this.s.day-n.birthDay)/360<3||this.s.day-(n.lastEducation||-100)<10||!this.w.routes.some(r=>r.id===route)||this.s.silver<12)return false;this.s.silver-=12;this.s.energy--;n.lastEducation=this.s.day;n.education??={};n.education[route]=Math.min(100,(n.education[route]||0)+5);return this.result('家学有继',`${n.name}修习${this.w.routes.find(r=>r.id===route).name}家学，积累5点传习。子女成年传家后化为初始本领与成长助力。`);};
 P.designateHeir=function(id){const n=this.children().find(n=>n.id===id);if(!n||!this.free())return false;this.s.family.heir=id;return this.result('立下传家约',`你指定${n.name}为传人。现在可先培养，满18岁后可正式传家；若家主寿尽，也会按约安排。`);};
