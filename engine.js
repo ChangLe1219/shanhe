@@ -4,7 +4,7 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const get=(o,p)=>p.split('.').reduce((v,k)=>v?.[k],o);
 function put(o,p,v){const keys=p.split('.');let a=o;for(const k of keys.slice(0,-1))a=a[k]??={};a[keys.at(-1)]=v;}
-const SAFE=/^(silver|health|renown|heat|morality|stats\.(martial|business|learning|strategy|charm|insight|constitution|luck)|routes\.[a-z]+|factions\.[a-z]+|relations\.[a-z]+|inventory\.[a-z][a-z0-9_]*|flags\.[a-z][a-z0-9_]*)$/;
+const SAFE=/^(silver|health|renown|heat|morality|stats\.(martial|business|learning|strategy|charm|insight|constitution|luck)|routes\.[a-z]+|factions\.[a-z]+|relations\.[a-z][a-z0-9_]*|inventory\.[a-z][a-z0-9_]*|flags\.[a-z][a-z0-9_]*)$/;
 const BAD=new Set(['__proto__','prototype','constructor']);
 function safePath(p){return typeof p==='string'&&SAFE.test(p)&&!p.split('.').some(k=>BAD.has(k));}
 class Game {
