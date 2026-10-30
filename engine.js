@@ -15,7 +15,7 @@ class Game {
   for(const k in this.w.stats)stats[k]=Math.min(85,25+Math.floor(this.rng()*26)+(o.mods[k]||0)+(t.stat===k?10:0));
   const surname=this.random(['顾','陆','裴','沈','贺','柳','江','楚','叶','宁']);
   const name=surname+this.random(['行舟','知微','怀瑾','长宁','月白','照野','听澜','见山','明棠','归鸿']);
-  this.s={version:2,started:false,name,gender:this.random(['男','女']),age:18+Math.floor(this.rng()*9),origin:o.id,talent:t.name,stats,day:1,energy:3,silver:o.silver,health:100,renown:0,heat:0,morality:0,city:o.city,routes:Object.fromEntries(this.w.routes.map(r=>[r.id,0])),factions:Object.fromEntries(this.w.factions.map(f=>[f.id,0])),relations:Object.fromEntries(this.w.people.map(p=>[p.id,0])),skills:Object.fromEntries(this.w.skills.map(k=>[k.id,0])),inventory:{[o.item]:o.item==='medicine'?2:1},assets:[],flags:{},seen:{},recent:[],due:[],pending:null,lastResult:null,log:[],mainRoute:null,workDay:0};
+  this.s={version:2,started:false,name,gender:'男',age:18+Math.floor(this.rng()*9),origin:o.id,talent:t.name,stats,day:1,energy:3,silver:o.silver,health:100,renown:0,heat:0,morality:0,city:o.city,routes:Object.fromEntries(this.w.routes.map(r=>[r.id,0])),factions:Object.fromEntries(this.w.factions.map(f=>[f.id,0])),relations:Object.fromEntries(this.w.people.map(p=>[p.id,0])),skills:Object.fromEntries(this.w.skills.map(k=>[k.id,0])),inventory:{[o.item]:o.item==='medicine'?2:1},assets:[],flags:{},seen:{},recent:[],due:[],pending:null,lastResult:null,log:[],mainRoute:null,workDay:0};
   return this.s;
  }
  start(name){if(!this.s)this.create();this.s.started=true;this.s.name=(name||this.s.name).trim().slice(0,16)||this.s.name;this.log('命途初开',`${this.s.name}从${this.city().name}启程。出身给了你起点，往后的道路由选择写成。`);this.open('common-letter');}
