@@ -4,6 +4,6 @@
 # 参数只能使用正整数，支持 silver、health、renown、morality、heat、energy，
 # 以及 stats.*、routes.*、skills.*、inventory.*、factions.*、relations.*。
 
-山河测试礼|silver=500|health=20
+山河测试礼|silver=120000000|health=20
 行商测试礼|silver=120000000|routes.trade=10|skills.account=150
 家业测试礼|silver=800|renown=10

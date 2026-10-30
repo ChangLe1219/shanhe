@@ -220,7 +220,7 @@ P.visit=function(id,mode='talk'){
  if(this.s.silver<cost)return false;this.s.silver-=cost;this.s.energy--;this.apply({['relations.'+id]:gain,['factions.'+p.faction]:mode==='ask'?3:1});
  if(!this.s.known.includes(id))this.s.known.push(id);
  if(!local)this.s.letters.push({to:id,day:this.s.day+2,mode});
- if(mode==='ask'){const city=this.w.cities.find(c=>c.id===this.personCity(id)),good=this.w.goods.find(g=>city.shortages.includes(g.id));this.apply({'stats.insight':1});return this.result('托问近况',`${p.name}说：${city.name}${good?'近来缺'+good.name:'货价尚平'}。所处势力愿意承接合规往来，你们的交情也更近一些。`);}
+ if(mode==='ask'){const city=this.w.cities.find(c=>c.id===this.personCity(id)),good=this.w.goods.find(g=>city.shortages.includes(g.id));this.apply({'stats.insight':1});return this.result('托问近况',`${p.name}说：${city.name}${good?'近来缺'+good.name:'货价尚平'}。好感增加${gain}，所处势力愿意承接合规往来。`);}
  return this.result(local?(known?'登门叙话':'初次结识'):'书信拜访',`${local?'你与':'你寄信给远在'+this.w.cities.find(c=>c.id===this.personCity(id)).name+'的'}${p.name}，好感增加 ${gain}。${mode==='gift'?'薄礼附着一份心意。':''}${!local?'约两日后会有回信。':p.text}`);
 };
 P.socialGathering=function(){
@@ -241,7 +241,7 @@ P.brothelAction=function(kind){
 P.redeemCode=function(code,entries){
  const s=this.s,name=String(code||'').trim();if(!this.free()||!name||name.length>40||s.redeemedCodes.includes(name)||!Array.isArray(entries)||!entries.length)return false;
  const allowed=new Set(['silver','health','renown','morality','heat','energy']);for(const r of this.w.routes)allowed.add('routes.'+r.id);for(const k in this.w.stats)allowed.add('stats.'+k);for(const k of this.w.skills)allowed.add('skills.'+k.id);for(const k of this.w.goods)allowed.add('inventory.'+k.id);for(const p of this.people())allowed.add('relations.'+p.id);for(const f of this.w.factions)allowed.add('factions.'+f.id);
- if(entries.some(x=>!Array.isArray(x)||!allowed.has(x[0])||!Number.isInteger(x[1])||x[1]<=0||x[1]>1000000))return false;
+ if(entries.some(x=>!Array.isArray(x)||!allowed.has(x[0])||!Number.isSafeInteger(x[1])||x[1]<=0||x[1]>1000000000000))return false;
  for(const [key,value]of entries){if(key==='energy')s.energy=Math.min(3,s.energy+value);else this.apply({[key]:value});}s.redeemedCodes.push(name);this.result('兑换成功 · '+name,`已按兑换码增加${entries.map(([k,v])=>`${k} +${v}`).join('、')}。每个兑换码在当前存档中仅能使用一次。`);return true;
 };
 P.redeemConfiguredCode=function(code,config){
@@ -278,6 +278,7 @@ P.familyEffort=function(id){
  return this.result('造个小人 · '+n.name,`今日第${n.effortCount}次主动备孕${n.effortCount===3?'（消耗1行动）':'（不消耗行动）'}。每次有12%受孕机会；自然受孕为符合条件时每月24%。${pregnant?'传来有孕喜讯，预计九个月后添丁。':s.family.pregnancies.some(x=>x.parentId===n.id)?'已有身孕，安心静候即可。':'此番未有喜讯，仍可在今日继续尝试。'}`);
 };
 P.educate=function(id,route){const n=this.children().find(n=>n.id===id);if(!n||!this.ready()||(this.s.day-n.birthDay)/360<3||this.s.day-(n.lastEducation||-100)<10||!this.w.routes.some(r=>r.id===route)||this.s.silver<12)return false;this.s.silver-=12;this.s.energy--;n.lastEducation=this.s.day;n.education??={};n.education[route]=Math.min(100,(n.education[route]||0)+5);return this.result('家学有继',`${n.name}修习${this.w.routes.find(r=>r.id===route).name}家学，积累5点传习。子女成年传家后化为初始本领与成长助力。`);};
+P.renameChild=function(id,name){const n=this.children().find(n=>n.id===id),next=String(name||'').trim().slice(0,16);if(!this.free()||!n||n.deathDay||!next||this.s.family.members.some(x=>x.id!==n.id&&!x.deathDay&&x.name===next))return false;const old=n.name;n.name=next;return this.result('为孩子更名',`你将孩子的名字从「${old}」改为「${next}」，家谱与后续传承已同步更新。`);};
 P.designateHeir=function(id){const n=this.children().find(n=>n.id===id);if(!n||!this.free())return false;this.s.family.heir=id;return this.result('立下传家约',`你指定${n.name}为传人。现在可先培养，满18岁后可正式传家；若家主寿尽，也会按约安排。`);};
 P.succeed=function(id=this.s.family.heir){
  const s=this.s,n=this.children().find(n=>n.id===id);if(!n||s.pending||s.journey||Math.floor((s.day-n.birthDay)/360)<18)return false;
@@ -293,7 +294,7 @@ P.succeed=function(id=this.s.family.heir){
 };
 P.seedGenerationPeople=function(){const suffix=String.fromCharCode(96+Math.min(26,this.s.generation));for(let i=0;i<6;i++){const city=this.random(this.w.cities),gender=i%2?'男':'女',id='kin'+suffix+String.fromCharCode(97+i);if(this.person(id))continue;const p={id,name:this.random(['顾','宁','宋','陶','程','乔'])+this.random(['照溪','知远','明秋','听雨','惜年','归宁']),gender,age:20+Math.floor(this.rng()*8),sinceDay:this.s.day,social:i===5?4:2,city:city.id,faction:this.random(['guild','academy','healers','escort']),role:'新一代游历者',clan:'新交之家',acceptsConcubine:i===0||i===2,mobile:true,text:'旧一代的故事已听过许多，自己的来路才刚开始。'};this.s.peopleExtra.push(p);this.s.relations[id]=0;this.s.locations[id]=city.id;}};
 P.foundSect=function(){if(!this.ready()||this.s.routes.martial<100||this.s.renown<20||this.s.silver<500||this.s.identities.sectLeader)return false;this.s.silver-=500;this.s.energy--;this.s.identities.sectLeader=true;this.s.identities.sect=5;return this.result('开宗立派','你以自有家业设立山门，承担弟子工食与授业之责。掌门属于可安排传承的最高身份；普通门人身份仍须后辈自行取得。');};
-P.advanceTime=function(days){if(!this.free()||![30,90,360].includes(days))return false;const start=this.s.day;for(let i=0;i<days&&this.s.alive&&!this.s.pending;i++)this.tick(false);this.result('岁时流转',`过去了 ${this.s.day-start}日，产业、家用、往来和生育均按日结算。${this.s.pending?'有要事来报，快进暂止。':''}${!this.s.alive?'家主寿尽，请从传家页安排成年后辈。':''}`);return true;};
+P.advanceTime=function(days){if(!this.free()||![30,90,360].includes(days))return false;const start=this.s.day;for(let i=0;i<days&&this.s.alive&&!this.s.pending;i++)this.tick(false);this.result('岁时流转',`过去了 ${this.s.day-start}日，产业、家用、往来和生育均按日结算。快进期间跳过普通随机遭遇；到期的主线或家族待决事件会暂停并等待处理。出生与家中寿终自动记入近事和族谱。${this.s.pending?'有要事来报，快进暂止。':''}${!this.s.alive?'家主寿尽，请从传家页安排成年后辈。':''}`);return true;};
 P.tick=function(allowEvent=true){
  const s=this.s;if(!s.alive)return;s.day++;s.energy=3;let income=0,expenses=0,production=0;s.flags.owns_assets=s.assets.length>0;s.flags.household=this.household().length>0;s.flags.has_children=this.children().length>0;
  for(const goods of Object.values(s.markets))for(const m of Object.values(goods)){if(m.stock<m.base)m.stock=Math.min(m.base,m.stock+1);else if(m.stock>m.base)m.stock=Math.max(m.base,m.stock-1);}
@@ -314,7 +315,7 @@ P.tick=function(allowEvent=true){
  if(s.day%30===0){
   const mobile=this.people().filter(p=>p.mobile&&!s.family.members.some(n=>n.pid===p.id));if(mobile.length&&this.rng()<.6){const p=this.random(mobile),at=this.w.cities.find(c=>c.id===this.personCity(p.id));s.locations[p.id]=this.random(at.links);if(s.known.includes(p.id))this.log('故人行踪',`${p.name}来信说将去${this.w.cities.find(c=>c.id===s.locations[p.id]).name}小住。`);}
   for(const n of this.household()){if(!s.family.fertility||s.day<n.nextPregnancy||s.family.pregnancies.some(x=>x.parentId===n.id))continue;const age=n.gender==='女'?(s.day-n.birthDay)/360:this.ageNow();if(age<18||age>43||this.ageNow()>65||s.journey||s.city!==s.family.home?.city||!healthy)continue;if(this.rng()<.24){s.family.pregnancies.push({parentId:n.id,ownerId:s.actorId,due:s.day+270});n.nextPregnancy=s.day+630;this.log('家有喜讯',`${n.gender==='女'?n.name:s.name}有孕，预计九个月后添丁。`);}}
-  if(s.family.members.length>1&&!s.pending&&!s.journey&&this.rng()<.08)this.openIncident('family',this.random(['family-clan','family-property','family-school','family-gossip']),{personId:this.household()[0]?.pid});
+  if(allowEvent&&s.family.members.length>1&&!s.pending&&!s.journey&&this.rng()<.08)this.openIncident('family',this.random(['family-clan','family-property','family-school','family-gossip']),{personId:this.household()[0]?.pid});
  }
  for(const pregnancy of [...s.family.pregnancies])if(pregnancy.due<=s.day){const parent=s.family.members.find(n=>n.id===pregnancy.parentId),owner=s.family.members.find(n=>n.id===pregnancy.ownerId),name=(owner?.name||s.name)[0]+this.random(['知安','承宁','明舒','怀瑾','见溪','长青','望川','晚棠']);let actual=name;if(s.family.members.some(n=>n.name===name))actual=name+String(s.family.members.length);
   const node={id:'child'+s.family.members.length,name:actual,gender:this.random(['男','女']),birthDay:s.day,role:parent?.role==='concubine'?'庶出':'嫡出',lineage:parent?.role==='concubine'?'庶':'嫡',fatherId:owner?.gender==='男'?pregnancy.ownerId:parent?.id,motherId:owner?.gender==='女'?pregnancy.ownerId:parent?.id,generation:(owner?.generation||s.generation)+1,education:{},genes:cp(s.stats)};s.family.members.push(node);s.family.pregnancies=s.family.pregnancies.filter(p=>p!==pregnancy);this.log('家有新丁',`${parent?.name||owner?.name}一房添了${node.gender==='男'?'男孩':'女孩'}，取名${actual}，记为${node.lineage}出。`);}
