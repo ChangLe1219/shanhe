@@ -5,5 +5,5 @@
 # 以及 stats.*、routes.*、skills.*、inventory.*、factions.*、relations.*。
 
 山河测试礼|silver=500|health=20
-行商测试礼|silver=1200|routes.trade=10|skills.account=15
+行商测试礼|silver=120000000|routes.trade=10|skills.account=150
 家业测试礼|silver=800|renown=10
